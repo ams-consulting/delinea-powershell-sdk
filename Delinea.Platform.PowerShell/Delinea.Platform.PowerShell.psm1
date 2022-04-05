@@ -18,7 +18,11 @@
 $FunctionsList = @(
     # Core Cmdlets
     'Connect-XPMPlatform',
+    'Disconnect-XPMPlatform',
+    'Invoke-XPMQuery',
     # User Management
+    'Get-XPMGroup',
+    'Get-XPMGroupMembers',
     'Get-XPMUser'
 )
 Export-ModuleMember -Function $FunctionsList

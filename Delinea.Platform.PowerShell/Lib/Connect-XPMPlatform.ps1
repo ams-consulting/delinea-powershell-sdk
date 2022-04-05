@@ -79,13 +79,29 @@ function Connect-XPMPlatform {
 		[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
         # Delete any existing connexion cache
-        if($Global:PlatformConnection.exist) {
+        if($Global:PlatformConnection -ne [Void]$null) {
             $Global:PlatformConnection = $null
         }
 
 		if (-not [System.String]::IsNullOrEmpty($Client)) {
             # Get Bearer Token from OAuth2 Client App
-			$BearerToken = Delinea.Platform.PowerShell.OAuth2.GetBearerToken -Url $Url -Client $Client -Secret $Secret -Scope $Scope
+            $Uri = ("https://{0}/oauth2/token/{1}" -f $Url, $Client)
+            $ContentType = "application/x-www-form-urlencoded" 
+            $Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "True"; "Authorization" = ("Basic {0}" -f $Secret) }
+            Write-Host ("Connecting to Centrify Identity Services (https://{0}) using OAuth2 Client Credentials flow" -f $Url)
+                    
+            # Format body
+            $Body = ("grant_type=client_credentials&scope={0}" -f  $Scope)
+            
+            # Connect using OAuth2 Client
+            $WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable PASSession -Uri $Uri -Body $Body -ContentType $ContentType -Headers $Header
+            $WebResponseResult = $WebResponse.Content | ConvertFrom-Json
+            if ([System.String]::IsNullOrEmpty($WebResponseResult.access_token)) {
+                Throw "OAuth2 Client authentication error."
+            }
+            else {
+                $BearerToken = $WebResponseResult.access_token
+            }
 
             # Validate Bearer Token and obtain Session details
 			$Uri = ("https://{0}/Security/Whoami" -f $Url)
@@ -124,14 +140,16 @@ function Connect-XPMPlatform {
             $Client = Read-Host "Confidential Client name"
             $SecureString = Read-Host "Password" -AsSecureString
             $Password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureString))
-            # Return Base64 encoded secret
-            return ("Secret: {0}" -f (Delinea.Platform.PowerShell.OAuth2.ConvertToSecret -Client $Client -Password $Password))
+            # Combine ClientID and Password then encode authentication string in Base64
+            $AuthenticationString = ("{0}:{1}" -f $Client, $Password)
+            return ([System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($AuthenticationString)))
         }		
         elseif ($DecodeSecret.IsPresent) {
             # Get Base64 secret to decode
             $Secret = Read-Host "Secret"
-            # Return Confidential Client name and password
-            return (Delinea.Platform.PowerShell.OAuth2.ConvertFromSecret -Secret $Secret)
+            # Decode authentication string from Base64
+            $AuthenticationString = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($Secret))
+            return(@{ "ConfidentialClient" = $AuthenticationString.Split(':')[0]; "Password" = $AuthenticationString.Split(':')[1]})
         }		
         else {
 			# Setup variable for interactive connection using MFA

@@ -19,14 +19,14 @@
 	ModuleToProcess 	= 'Delinea.Platform.PowerShell.psm1'
 	ModuleVersion 		= '0.1.2903'
     NestedModules       = @(
-                            # Loading Utils functions
-                            '.\Util\Core.ps1',
-                            '.\Util\OAuth.ps1',
-                            '.\Util\Redrock.ps1',
-                            # Loading Module Cmdlets
+                            # Loading Cmdlets
                             '.\Lib\Connect-XPMPlatform.ps1',
+                            '.\Lib\Disconnect-XPMPlatform.ps1',
+                            '.\Lib\Invoke-XPMQuery.ps1',
+                            '.\Lib\Get-XPMGroup.ps1',
+                            '.\Lib\Get-XPMGroupMembers.ps1',
                             '.\Lib\Get-XPMUser.ps1'
-                           )
+                            )
 	PowerShellVersion 	= '5.0'
 	RequiredAssemblies 	= @()
 }

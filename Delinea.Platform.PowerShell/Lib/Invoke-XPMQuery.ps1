@@ -12,32 +12,37 @@
 
 <#
 .SYNOPSIS
-This Cmdlet retrieves important information about User(s) on the system.
+This Cmdlet invoke a Redrock Query on the Platform.
 
 .DESCRIPTION
-This Cmdlet retrieves important information about User(s) on the system. Can return a single user by specifying the Username.
+This Cmdlet invoke a Redrock Query from command line or a file. Only Select statements are allowed through Redrock.
+Results will be filtered based on permissions of the identity used to invoke the query on the platform (i.e. if you have no permissions on any secrets, a query returning all secrets will be empty regardless of secrets existing or not).
 
-.PARAMETER Username
-Specify the User by its Username.
+.PARAMETER Query
+Specify the query to invoke.
+
+.PARAMETER File
+Specify the file that contains the query to invoke.
 
 .INPUTS
-None
 
 .OUTPUTS
-[Object]XpmUser
 
 .EXAMPLE
-PS C:\> Get-XPMUser 
-Outputs all Users objects existing on the system
+PS C:\> Invoke-XPMQuery -Query "SELECT * From User"
+Outputs all Users objects existing on the system according to the query.
 
 .EXAMPLE
-PS C:\> Get-XPMUser -Username "john.doe@domain.name"
-Return user with username john.doe@domain.name if existing
+PS C:\> Invoke-XPMQuery -File .\get-all-users.sql
+Invoke the query from file named get-all-users.sql
 #>
-function Get-XPMUser {
+function Invoke-XPMQuery {
 	param (
-		[Parameter(Mandatory = $false, HelpMessage = "Specify the User by its Username.")]
-		[System.String]$Username
+		[Parameter(Mandatory = $false, HelpMessage = "Specify the query to invoke.")]
+		[System.String]$Query,
+
+		[Parameter(Mandatory = $false, HelpMessage = "Specify the file that contains the query to invoke.")]
+		[System.String]$File
 	)
 	
 	try	{	
@@ -48,13 +53,19 @@ function Get-XPMUser {
 			Break
         }
 
-		# Set RedrockQuery
-		$Query = "SELECT * FROM `"user`""
-		
-		# Set Arguments
-		if (-not [System.String]::IsNullOrEmpty($Username)) {
-			# Add Arguments to Statement
-			$Query = ("{0} WHERE username='{1}'" -f $Query, $Username)
+		if (-not [System.String]::IsNullOrEmpty($File)) {
+			# Test file
+			if (Test-Path -Path $File) {
+				# Get RedrockQuery from file
+				$Query = Get-Content -Path $File
+			}
+			else {
+				Throw ("Cannot open file {0}" -f $File)
+			}
+		}
+		elseif ([System.String]::IsNullOrEmpty($Query)) {
+			# Get RedrockQuery from file
+			Throw ("You must specify a query using file or command line argument.")
 		}
 
 		# Build Uri value from PlatformConnection variable

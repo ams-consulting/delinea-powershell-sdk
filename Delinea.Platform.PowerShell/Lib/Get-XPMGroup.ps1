@@ -12,32 +12,32 @@
 
 <#
 .SYNOPSIS
-This Cmdlet retrieves important information about User(s) on the system.
+This Cmdlet retrieves important information about Group(s) on the system.
 
 .DESCRIPTION
-This Cmdlet retrieves important information about User(s) on the system. Can return a single user by specifying the Username.
+This Cmdlet retrieves important information about Group(s) on the system. Can return a single group by specifying the Name.
 
-.PARAMETER Username
-Specify the User by its Username.
+.PARAMETER Name
+Specify the Group by its Name.
 
 .INPUTS
 None
 
 .OUTPUTS
-[Object]XpmUser
+[Object]XpmGroup
 
 .EXAMPLE
-PS C:\> Get-XPMUser 
-Outputs all Users objects existing on the system
+PS C:\> Get-XPMGroup
+Outputs all Groups objects existing on the system
 
 .EXAMPLE
-PS C:\> Get-XPMUser -Username "john.doe@domain.name"
-Return user with username john.doe@domain.name if existing
+PS C:\> Get-XPMGroup -Name "Product Group"
+Return group with Name "Product Group" if existing
 #>
-function Get-XPMUser {
+function Get-XPMGroup {
 	param (
-		[Parameter(Mandatory = $false, HelpMessage = "Specify the User by its Username.")]
-		[System.String]$Username
+		[Parameter(Mandatory = $false, HelpMessage = "Specify the Group by its Name.")]
+		[System.String]$Name
 	)
 	
 	try	{	
@@ -49,12 +49,12 @@ function Get-XPMUser {
         }
 
 		# Set RedrockQuery
-		$Query = "SELECT * FROM `"user`""
+		$Query = "SELECT * FROM `"role`""
 		
 		# Set Arguments
-		if (-not [System.String]::IsNullOrEmpty($Username)) {
+		if (-not [System.String]::IsNullOrEmpty($Name)) {
 			# Add Arguments to Statement
-			$Query = ("{0} WHERE username='{1}'" -f $Query, $Username)
+			$Query = ("{0} WHERE name='{1}'" -f $Query, $Name)
 		}
 
 		# Build Uri value from PlatformConnection variable
