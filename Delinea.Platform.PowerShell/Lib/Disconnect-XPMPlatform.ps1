@@ -26,17 +26,17 @@ PS C:\> Disconnect-XPMPlatform
 
 #>
 function Disconnect-XPMPlatform {
-	param ()
-	
-	try {	
-		# Set Security Protocol for RestAPI (must use TLS 1.2)
-		[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    param ()
 
-		# Test current connection to the XPM Platform
+    try {	
+        # Set Security Protocol for RestAPI (must use TLS 1.2)
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+        # Test current connection to the XPM Platform
         if ($Global:PlatformConnection -eq [Void]$null) {
             # Inform connection does not exists and suggest to initiate one
             Write-Warning ("No connection could be found with the Delinea XPM Platform Identity Services. Use Connect-XPMPlatform Cmdlet to create a valid connection.")
-			Break
+            Break
         }
         else {
             # Get existing connexion details
@@ -48,8 +48,8 @@ function Disconnect-XPMPlatform {
             Write-Host ("User    : {0}" -f $User)
             Write-Host ("Summary : Connection closed.`n")
         }
-	}
-	catch {
-		Throw $_.Exception
-	}
+    }
+    catch {
+        Throw $_.Exception
+    }
 }
