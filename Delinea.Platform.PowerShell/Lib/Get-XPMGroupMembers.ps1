@@ -39,36 +39,36 @@ function Get-XPMGroupMembers {
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true, HelpMessage = "Specify the Group by its object.")]
 		[System.Object]$XpmGroup
 	)
-	
+
 	try	{	
 		# Test current connection to the XPM Platform
-        if ($Global:PlatformConnection -eq [Void]$null) {
-            # Inform connection does not exists and suggest to initiate one
-            Write-Warning ("No connection could be found with the Delinea XPM Platform Identity Services. Use Connect-XPMPlatform Cmdlet to create a valid connection.")
+		if($Global:PlatformConnection -eq [Void]$null) {
+			# Inform connection does not exists and suggest to initiate one
+			Write-Warning ("No connection could be found with the Delinea XPM Platform Identity Services. Use Connect-XPMPlatform Cmdlet to create a valid connection.")
 			Break
-        }
+		}
 
 		# Test if XpmGroup is valid object and has a GUID
-		if ([System.String]::IsNullOrEmpty($XpmGroup) -or -not [GUID]::TryParse($XpmGroup.ID.Replace("_", "-"), $([REF][GUID]::Empty))) {
+		if([System.String]::IsNullOrEmpty($XpmGroup) -or -not [GUID]::TryParse($XpmGroup.ID.Replace("_", "-"), $([REF][GUID]::Empty))) {
 			# Add Arguments to Statement
 			Throw("Cannot read GUID from parameter.")
 		}
 
 		# Build Uri value from PlatformConnection variable
 		$Uri = ("https://{0}/api//roles/GetRoleMembers?name={1}" -f $PlatformConnection.PodFqdn, $XpmGroup.ID)
-		
+
 		# Create RedrockQuery
 		$RedrockQuery = @{}
-		$RedrockQuery.Uri			= $Uri
-		$RedrockQuery.ContentType	= "application/json"
-		$RedrockQuery.Header 		= @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
+		$RedrockQuery.Uri = $Uri
+		$RedrockQuery.ContentType = "application/json"
+		$RedrockQuery.Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
 		# Connect using RestAPI
 		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $RedrockQuery.Uri -Body $null -ContentType $RedrockQuery.ContentType -Headers $RedrockQuery.Header
 		$WebResponseResult = $WebResponse.Content | ConvertFrom-Json
-		if ($WebResponseResult.Success) {
+		if($WebResponseResult.Success) {
 			# Get raw data
-            return $WebResponseResult.Result.Results.Row
+			return $WebResponseResult.Result.Results.Row
 		}
 		else {
 			# Query error
