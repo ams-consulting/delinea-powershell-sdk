@@ -36,8 +36,8 @@ Return user with username john.doe@domain.name if existing
 #>
 function Get-XPMUser {
 	param (
-	[Parameter(Mandatory = $false, HelpMessage = "Specify the User by its Username.")]
-	[System.String]$Username
+		[Parameter(Mandatory = $false, HelpMessage = "Specify the User by its Username.")]
+		[System.String]$Username
 	)
 
 	try	{	
