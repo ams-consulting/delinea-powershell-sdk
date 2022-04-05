@@ -49,102 +49,102 @@ PS C:\> Connect-XPMPlatform -Url tenant.identity.delinea.app -User admin@tenant.
 
 #>
 function Connect-XPMPlatform {
-	param (
-		[Parameter(Mandatory = $false, Position = 0, HelpMessage = "Specify the Tenant URL to use for the connection (e.g. tenant.identity.delinea.app).")]
-		[Parameter(ParameterSetName = "Interactive")]
-		[Parameter(ParameterSetName = "OAuth2")]
-		[System.String]$Url,
-		
-		[Parameter(Mandatory = $true, ParameterSetName = "Interactive", HelpMessage = "Specify the User login to use for the connection (e.g. admin@tenant.delinea.app).")]
-		[System.String]$User,
-		
-		[Parameter(Mandatory = $true, ParameterSetName = "OAuth2", HelpMessage = "Specify the OAuth2 Client ID to use to obtain a Bearer Token.")]
+	param(
+        [Parameter(Mandatory = $false, Position = 0, HelpMessage = "Specify the Tenant URL to use for the connection (e.g. tenant.identity.delinea.app).")]
+        [Parameter(ParameterSetName = "Interactive")]
+        [Parameter(ParameterSetName = "OAuth2")]
+        [System.String]$Url,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "Interactive", HelpMessage = "Specify the User login to use for the connection (e.g. admin@tenant.delinea.app).")]
+        [System.String]$User,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "OAuth2", HelpMessage = "Specify the OAuth2 Client ID to use to obtain a Bearer Token.")]
         [System.String]$Client,
 
-		[Parameter(Mandatory = $true, ParameterSetName = "OAuth2", HelpMessage = "Specify the OAuth2 Scope Name to claim a Bearer Token for.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "OAuth2", HelpMessage = "Specify the OAuth2 Scope Name to claim a Bearer Token for.")]
         [System.String]$Scope,
 
-		[Parameter(Mandatory = $true, ParameterSetName = "OAuth2", HelpMessage = "Specify the OAuth2 Secret to use for the ClientID.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "OAuth2", HelpMessage = "Specify the OAuth2 Secret to use for the ClientID.")]
         [System.String]$Secret,
 
-		[Parameter(Mandatory = $false, ParameterSetName = "Base64", HelpMessage = "Encode Base64 Secret to use for OAuth2.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Base64", HelpMessage = "Encode Base64 Secret to use for OAuth2.")]
         [Switch]$EncodeSecret,
 
-		[Parameter(Mandatory = $false, ParameterSetName = "Base64", HelpMessage = "Decode Base64 Secret to use for Oauth2.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Base64", HelpMessage = "Decode Base64 Secret to use for Oauth2.")]
         [Switch]$DecodeSecret
 	)
 	
-	try {	
-		# Set Security Protocol for RestAPI (must use TLS 1.2)
-		[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    try {	
+        # Set Security Protocol for RestAPI (must use TLS 1.2)
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
         # Delete any existing connexion cache
         if($Global:PlatformConnection -ne [Void]$null) {
             $Global:PlatformConnection = $null
         }
 
-		if (-not [System.String]::IsNullOrEmpty($Client)) {
+        if(-not [System.String]::IsNullOrEmpty($Client)) {
             # Get Bearer Token from OAuth2 Client App
             $Uri = ("https://{0}/oauth2/token/{1}" -f $Url, $Client)
             $ContentType = "application/x-www-form-urlencoded" 
             $Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "True"; "Authorization" = ("Basic {0}" -f $Secret) }
-            Write-Host ("Connecting to Centrify Identity Services (https://{0}) using OAuth2 Client Credentials flow" -f $Url)
-                    
+            Write-Host("Connecting to Centrify Identity Services (https://{0}) using OAuth2 Client Credentials flow" -f $Url)
+
             # Format body
             $Body = ("grant_type=client_credentials&scope={0}" -f  $Scope)
-            
+
             # Connect using OAuth2 Client
             $WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable PASSession -Uri $Uri -Body $Body -ContentType $ContentType -Headers $Header
             $WebResponseResult = $WebResponse.Content | ConvertFrom-Json
-            if ([System.String]::IsNullOrEmpty($WebResponseResult.access_token)) {
-                Throw "OAuth2 Client authentication error."
+            if([System.String]::IsNullOrEmpty($WebResponseResult.access_token)) {
+                Throw("OAuth2 Client authentication error.")
             }
             else {
                 $BearerToken = $WebResponseResult.access_token
             }
 
             # Validate Bearer Token and obtain Session details
-			$Uri = ("https://{0}/Security/Whoami" -f $Url)
-			$ContentType = "application/json" 
-			$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "1"; "Authorization" = ("Bearer {0}" -f $BearerToken) }
-			
-			# Format Json query
-			$Json = @{} | ConvertTo-Json
-			
-			# Connect using bearer token
-			$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
-            $WebResponseResult = $WebResponse.Content | ConvertFrom-Json
-            if ($WebResponseResult.Success) {
-				# Get Connection details
-				$Connection = $WebResponseResult.Result
-				
-				# Force URL into PodFqdn to retain URL when performing MachineCertificate authentication
-				$Connection | Add-Member -MemberType NoteProperty -Name CustomerId -Value $Connection.TenantId
-				$Connection | Add-Member -MemberType NoteProperty -Name PodFqdn -Value $Url
-				
-				# Add session to the Connection
-				$Connection | Add-Member -MemberType NoteProperty -Name Session -Value $WebSession
+            $Uri = ("https://{0}/Security/Whoami" -f $Url)
+            $ContentType = "application/json" 
+            $Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "1"; "Authorization" = ("Bearer {0}" -f $BearerToken) }
 
-				# Set Connection as global
-				$Global:PlatformConnection = $Connection
-				
-				# Return information values to confirm connection success
-				return ($Connection | Select-Object -Property CustomerId, User, PodFqdn | Format-List)
+            # Format Json query
+            $Json = @{} | ConvertTo-Json
+
+            # Connect using bearer token
+            $WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
+            $WebResponseResult = $WebResponse.Content | ConvertFrom-Json
+            if($WebResponseResult.Success) {
+                # Get Connection details
+                $Connection = $WebResponseResult.Result
+
+                # Force URL into PodFqdn to retain URL when performing MachineCertificate authentication
+                $Connection | Add-Member -MemberType NoteProperty -Name CustomerId -Value $Connection.TenantId
+                $Connection | Add-Member -MemberType NoteProperty -Name PodFqdn -Value $Url
+
+                # Add session to the Connection
+                $Connection | Add-Member -MemberType NoteProperty -Name Session -Value $WebSession
+
+                # Set Connection as global
+                $Global:PlatformConnection = $Connection
+
+                # Return information values to confirm connection success
+                return($Connection | Select-Object -Property CustomerId, User, PodFqdn | Format-List)
             }
             else {
-                Throw "Invalid Bearer Token."
+                Throw("Invalid Bearer Token.")
             }
         }
-        elseif ($EncodeSecret.IsPresent) {
+        elseif($EncodeSecret.IsPresent) {
             # Get Confidential Client name and password
             $Client = Read-Host "Confidential Client name"
             $SecureString = Read-Host "Password" -AsSecureString
             $Password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureString))
             # Combine ClientID and Password then encode authentication string in Base64
             $AuthenticationString = ("{0}:{1}" -f $Client, $Password)
-            return ([System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($AuthenticationString)))
+            return([System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($AuthenticationString)))
         }		
-        elseif ($DecodeSecret.IsPresent) {
+        elseif($DecodeSecret.IsPresent) {
             # Get Base64 secret to decode
             $Secret = Read-Host "Secret"
             # Decode authentication string from Base64
@@ -152,47 +152,46 @@ function Connect-XPMPlatform {
             return(@{ "ConfidentialClient" = $AuthenticationString.Split(':')[0]; "Password" = $AuthenticationString.Split(':')[1]})
         }		
         else {
-			# Setup variable for interactive connection using MFA
-			$Uri = ("https://{0}/Security/StartAuthentication" -f $Url)
-			$ContentType = "application/json" 
-			$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true" }
-			Write-Host ("Connecting to XPM PLatform Identity Services (https://{0}) as {1}`n" -f $Url, $User)
-			
-			# Format Json query
-			$Auth = @{}
-			$Auth.User = $User
-            $Auth.Version = "1.0"
-			$Json = $Auth | ConvertTo-Json
-			
-			# Initiate connection
-			$InitialResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
+            # Setup variable for interactive connection using MFA
+            $Uri = ("https://{0}/Security/StartAuthentication" -f $Url)
+            $ContentType = "application/json" 
+            $Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true" }
+            Write-Host("Connecting to XPM PLatform Identity Services (https://{0}) as {1}`n" -f $Url, $User)
 
-    		# Getting Authentication challenges from initial Response
+            # Format Json query
+            $Auth = @{}
+            $Auth.User = $User
+            $Auth.Version = "1.0"
+            $Json = $Auth | ConvertTo-Json
+
+            # Initiate connection
+            $InitialResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
+
+            # Getting Authentication challenges from initial Response
             $InitialResponseResult = $InitialResponse.Content | ConvertFrom-Json
-		    if ($InitialResponseResult.Success) {
+            if($InitialResponseResult.Success) {
                 # Go through all challenges
-                foreach ($Challenge in $InitialResponseResult.Result.Challenges) {
+                foreach($Challenge in $InitialResponseResult.Result.Challenges) {
                     # Go through all available mechanisms
-                    if ($Challenge.Mechanisms.Count -gt 1) {
-                        Write-Host "`n[Available mechanisms]"
+                    if($Challenge.Mechanisms.Count -gt 1) {
+                        Write-Host("`n[Available mechanisms]")
                         # More than one mechanism available
                         $MechanismIndex = 1
-                        foreach ($Mechanism in $Challenge.Mechanisms) {
+                        foreach($Mechanism in $Challenge.Mechanisms) {
                             # Show Mechanism
-                            Write-Host ("{0} - {1}" -f $MechanismIndex++, $Mechanism.PromptSelectMech)
+                            Write-Host("{0} - {1}" -f $MechanismIndex++, $Mechanism.PromptSelectMech)
                         }
-                        
                         # Prompt for Mechanism selection
                         $Selection = Read-Host -Prompt "Please select a mechanism [1]"
                         # Default selection
-                        if ([System.String]::IsNullOrEmpty($Selection)) {
+                        if([System.String]::IsNullOrEmpty($Selection)) {
                             # Default selection is 1
                             $Selection = 1
                         }
                         # Validate selection
-                        if ($Selection -gt $Challenge.Mechanisms.Count) {
+                        if($Selection -gt $Challenge.Mechanisms.Count) {
                             # Selection must be in range
-                            Throw "Invalid selection. Authentication challenge aborted." 
+                            Throw("Invalid selection. Authentication challenge aborted.")
                         }
                     }
                     elseif($Challenge.Mechanisms.Count -eq 1) {
@@ -207,12 +206,12 @@ function Connect-XPMPlatform {
                     # Select chosen Mechanism and prepare answer
                     $ChosenMechanism = $Challenge.Mechanisms[$Selection - 1]
 
-			        # Format Json query
-			        $Auth = @{}
-			        $Auth.TenantId = $InitialResponseResult.Result.TenantId
-			        $Auth.SessionId = $InitialResponseResult.Result.SessionId
+                    # Format Json query
+                    $Auth = @{}
+                    $Auth.TenantId = $InitialResponseResult.Result.TenantId
+                    $Auth.SessionId = $InitialResponseResult.Result.SessionId
                     $Auth.MechanismId = $ChosenMechanism.MechanismId
-                    
+
                     # Decide for Prompt or Out-of-bounds Auth
                     switch($ChosenMechanism.AnswerType) {
                         "Text" {
@@ -222,7 +221,7 @@ function Connect-XPMPlatform {
                             $SecureString = Read-Host $ChosenMechanism.PromptMechChosen -AsSecureString
                             $Auth.Answer = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureString))
                         }
-                        
+
                         "StartTextOob" {
                             # Out-of-bounds Authentication (User need to take action other than through typed answer)
                             $Auth.Action = "StartOOB"
@@ -230,73 +229,72 @@ function Connect-XPMPlatform {
                             Write-Host $ChosenMechanism.PromptMechChosen
                         }
                     }
-	                $Json = $Auth | ConvertTo-Json
-                    
+                    $Json = $Auth | ConvertTo-Json
+
                     # Send Challenge answer
-			        $Uri = ("https://{0}/Security/AdvanceAuthentication" -f $Url)
-			        $ContentType = "application/json" 
-			        $Header = @{ "X-Centrify-NATIVE-CLIENT" = "true" }
-			
-			        # Send answer
-			        $WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
-            		
+                    $Uri = ("https://{0}/Security/AdvanceAuthentication" -f $Url)
+                    $ContentType = "application/json" 
+                    $Header = @{ "X-Centrify-NATIVE-CLIENT" = "true" }
+
+                    # Send answer
+                    $WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
+
                     # Get Response
                     $WebResponseResult = $WebResponse.Content | ConvertFrom-Json
-                    if ($WebResponseResult.Success) {
+                    if($WebResponseResult.Success) {
                         # Evaluate Summary response
                         if($WebResponseResult.Result.Summary -eq "OobPending") {
                             $Answer = Read-Host "Enter code or press <enter> to finish authentication"
                             # Send Poll message to Delinea Identity Platform after pressing enter key
-			                $Uri = ("https://{0}/Security/AdvanceAuthentication" -f $Url)
-			                $ContentType = "application/json" 
-			                $Header = @{ "X-Centrify-NATIVE-CLIENT" = "true" }
-			
-			                # Format Json query
-			                $Auth = @{}
+                            $Uri = ("https://{0}/Security/AdvanceAuthentication" -f $Url)
+                            $ContentType = "application/json" 
+                            $Header = @{ "X-Centrify-NATIVE-CLIENT" = "true" }
+
+                            # Format Json query
+                            $Auth = @{}
                             $Auth.TenantId = $InitialResponseResult.Result.TenantId
-			                $Auth.SessionId = $InitialResponseResult.Result.SessionId
+                            $Auth.SessionId = $InitialResponseResult.Result.SessionId
                             $Auth.MechanismId = $ChosenMechanism.MechanismId
-                            
+
                             # Either send entered code or poll service for answer
-                            if ([System.String]::IsNullOrEmpty($Answer)) {
+                            if([System.String]::IsNullOrEmpty($Answer)) {
                                 $Auth.Action = "Poll"
                             }
                             else {
                                 $Auth.Action = "Answer"
                                 $Auth.Answer = $Answer
                             }
-			                $Json = $Auth | ConvertTo-Json
-			
+                            $Json = $Auth | ConvertTo-Json
+
                             # Send Poll message or Answer
-			                $WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
+                            $WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
                             $WebResponseResult = $WebResponse.Content | ConvertFrom-Json
-                            if ($WebResponseResult.Result.Summary -ne "LoginSuccess") {
-                                Throw "Failed to receive challenge answer or answer is incorrect. Authentication challenge aborted."
+                            if($WebResponseResult.Result.Summary -ne "LoginSuccess") {
+                                Throw("Failed to receive challenge answer or answer is incorrect. Authentication challenge aborted.")
                             }
                         }
-
                         # If summary return LoginSuccess at any step, we can proceed with session
                         if ($WebResponseResult.Result.Summary -eq "LoginSuccess") {
                             # Get Session Token from successfull login
                             $Global:PlatformConnection = $WebResponseResult.Result
-				
-			                # Return information values to confirm connection success
-			                return ($Global:PlatformConnection | Select-Object -Property PodFqdn, User, Summary | Format-List)
+
+                            # Return information values to confirm connection success
+                            return ($Global:PlatformConnection | Select-Object -Property PodFqdn, User, Summary | Format-List)
                         }
-		            }
-		            else {
+                    }
+                    else {
                         # Unsuccesful connection
-			            Throw $WebResponseResult.Message
-		            }
+                        Throw $WebResponseResult.Message
+                    }
                 }
-		    }
-		    else {
-			    # Unsuccesful connection
-			    Throw $InitialResponseResult.Message
-		    }
-		}
-	}
-	catch {
-		Throw $_.Exception
-	}
+            }
+            else {
+                # Unsuccesful connection
+                Throw $InitialResponseResult.Message
+            }
+        }
+    }
+    catch {
+        Throw $_.Exception
+    }
 }
