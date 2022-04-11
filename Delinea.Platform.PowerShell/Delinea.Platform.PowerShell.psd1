@@ -24,6 +24,7 @@
         '.\Lib\Disconnect-XPMPlatform.ps1',
         '.\Lib\Invoke-XPMQuery.ps1',
         '.\Lib\Get-XPMGroup.ps1',
+        '.\Lib\New-XPMGroup.ps1',
         '.\Lib\Get-XPMGroupMembers.ps1',
         '.\Lib\Get-XPMUser.ps1',
         '.\Lib\New-XPMUser.ps1',
