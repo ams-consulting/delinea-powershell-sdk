@@ -19,6 +19,7 @@ $FunctionsList = @(
     # User Management
     'Get-XPMGroup',
     'Get-XPMGroupMembers',
-    'Get-XPMUser'
+    'Get-XPMUser',
+    'New-XPMUser'
 )
 Export-ModuleMember -Function $FunctionsList

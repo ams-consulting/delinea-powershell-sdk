@@ -1,4 +1,9 @@
 # CHANGELOG
+**0.2.41122 - BETA**
+
+- Adding User management
+
+
 **0.1.2903 - BETA**
 
 - Adding connection to Delinea XPM Platform

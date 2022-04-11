@@ -17,7 +17,7 @@
     Description = 'This PowerShell module is to be used with Delinea XPM Platform.'
     GUID = '325f94ca-6660-a42b-210d-2e0f39d34b9a'
     ModuleToProcess = 'Delinea.Platform.PowerShell.psm1'
-    ModuleVersion = '0.1.2903'
+    ModuleVersion = '0.2.41122'
     NestedModules = @(
         # Loading Cmdlets
         '.\Lib\Connect-XPMPlatform.ps1',
@@ -25,7 +25,8 @@
         '.\Lib\Invoke-XPMQuery.ps1',
         '.\Lib\Get-XPMGroup.ps1',
         '.\Lib\Get-XPMGroupMembers.ps1',
-        '.\Lib\Get-XPMUser.ps1'
+        '.\Lib\Get-XPMUser.ps1',
+        '.\Lib\New-XPMUser.ps1'
         )
     PowerShellVersion = '5.0'
     RequiredAssemblies = @()
