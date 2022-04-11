@@ -20,14 +20,8 @@ This Cmdlet creates a Group on the system.
 .PARAMETER Name
 Specify the Name for Group to create.
 
-.PARAMETER DisplayName
-Specify the Display Name for User to create.
-
-.PARAMETER Email
-Specify the Email for User to create.
-
-.PARAMETER Password
-Specify the Password for User to create (if no Password is specified, a randomly generated one will be assigned instead).
+.PARAMETER Description
+Specify the Description for Group to create.
 
 .INPUTS
 None
@@ -44,14 +38,8 @@ function New-XPMGroup {
 		[Parameter(Mandatory = $true, HelpMessage = "Specify the Name for Group to create.")]
 		[System.String]$Name,
 
-		[Parameter(Mandatory = $true, HelpMessage = "Specify the Display Name for User to create.")]
-		[System.String]$DisplayName,
-
-		[Parameter(Mandatory = $true, HelpMessage = "Specify the Email for User to create.")]
-		[System.String]$Mail,
-
-		[Parameter(Mandatory = $false, HelpMessage = "Specify the Password for User to create (if no Password is specified, a randomly generated one will be assigned instead).")]
-		[System.String]$Password
+		[Parameter(Mandatory = $true, HelpMessage = "Specify the Description for Group to create.")]
+		[System.String]$Description
 )
 
 	try	{	
@@ -62,43 +50,15 @@ function New-XPMGroup {
 			Break
 		}
 
-		if([System.String]::IsNullOrEmpty($Password)) {
-			# If password is empty, then generate password using default policy
-			$Uri = ("https://{0}/api//Core/GeneratePassword" -f $PlatformConnection.PodFqdn)
-			$ContentType = "application/json"
-			$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
-
-			# Create Json payload
-			$Payload = @{}
-			$Payload.passwordLength = 0
-
-			$Json = $Payload | ConvertTo-Json
-
-			# Connect using RestAPI
-			$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
-			$WebResponseResult = $WebResponse.Content | ConvertFrom-Json
-			if($WebResponseResult.Success) {
-				# Get raw data
-				$Password = $WebResponseResult.Result
-			}
-			else {
-				# Query error
-				Throw $WebResponseResult.Message
-			}		
-		}
-
 		# Setup values for API request
-		$Uri = ("https://{0}/api//CDirectoryService/CreateUser" -f $PlatformConnection.PodFqdn)
+		$Uri = ("https://{0}/api//Roles/StoreRole" -f $PlatformConnection.PodFqdn)
 		$ContentType = "application/json" 
 		$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
 		# Create Json payload
 		$Payload = @{}
 		$Payload.Name = $Name
-		$Payload.DisplayName = $DisplayName
-		$Payload.Mail = $Mail
-		$Payload.Password = $Password
-		$Payload.confirmPassword = $Password
+		$Payload.Description = $Description
 
 		$Json = $Payload | ConvertTo-Json
 
@@ -107,7 +67,7 @@ function New-XPMGroup {
 		$WebResponseResult = $WebResponse.Content | ConvertFrom-Json
 		if($WebResponseResult.Success) {
 			# Get raw data
-			return(Get-XPMUser | Where-Object { $_.ID -eq $WebResponseResult.Result })
+			return(Get-XPMGroup | Where-Object { $_.ID -eq $WebResponseResult.Result })
 		}
 		else {
 			# Query error
