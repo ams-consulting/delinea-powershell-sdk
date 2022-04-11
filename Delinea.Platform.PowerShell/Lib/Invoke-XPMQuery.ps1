@@ -68,23 +68,19 @@ function Invoke-XPMQuery {
 			Throw ("You must specify a query using file or command line argument.")
 		}
 
-		# Build Uri value from PlatformConnection variable
+		# Setup values for API request
 		$Uri = ("https://{0}/api//RedRock/Query" -f $PlatformConnection.PodFqdn)
+		$ContentType = "application/json"
+		$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
-		# Create RedrockQuery
-		$RedrockQuery = @{}
-		$RedrockQuery.Uri = $Uri
-		$RedrockQuery.ContentType = "application/json"
-		$RedrockQuery.Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
+		# Create Json payload
+		$Payload = @{}
+		$Payload.Script = $Query
 
-		# Build the JsonQuery string and add it to the RedrockQuery
-		$JsonQuery = @{}
-		$JsonQuery.Script = $Query
-
-		$RedrockQuery.Json = $JsonQuery | ConvertTo-Json
+		$Json = $Payload | ConvertTo-Json
 
 		# Connect using RestAPI
-		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $RedrockQuery.Uri -Body $RedrockQuery.Json -ContentType $RedrockQuery.ContentType -Headers $RedrockQuery.Header
+		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
 		$WebResponseResult = $WebResponse.Content | ConvertFrom-Json
 		if ($WebResponseResult.Success) {
 			# Get raw data
