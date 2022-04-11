@@ -46,10 +46,7 @@ function New-XPMUser {
 		[System.String]$Mail,
 
 		[Parameter(Mandatory = $false, HelpMessage = "Specify the User by its Name.")]
-		[System.String]$Password,
-
-		[Parameter(Mandatory = $false, HelpMessage = "Specify the User by its Name.")]
-		[Switch]$GeneratePassword
+		[System.String]$Password
 )
 
 	try	{	
@@ -58,6 +55,31 @@ function New-XPMUser {
 			# Inform connection does not exists and suggest to initiate one
 			Write-Warning ("No connection could be found with the Delinea XPM Platform Identity Services. Use Connect-XPMPlatform Cmdlet to create a valid connection.")
 			Break
+		}
+
+		if([System.String]::IsNullOrEmpty($Password)) {
+			# If password is empty, then generate password using default policy
+			$Uri = ("https://{0}/api//Core/GeneratePassword" -f $PlatformConnection.PodFqdn)
+			$ContentType = "application/json"
+			$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
+
+			# Create Json payload
+			$Payload = @{}
+			$Payload.passwordLength = 0
+
+			$Json = $Payload | ConvertTo-Json
+
+			# Connect using RestAPI
+			$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
+			$WebResponseResult = $WebResponse.Content | ConvertFrom-Json
+			if ($WebResponseResult.Success) {
+				# Get raw data
+				$Password = $WebResponseResult.Result
+			}
+			else {
+				# Query error
+				Throw $WebResponseResult.Message
+			}		
 		}
 
 		# Setup values for API request
@@ -80,49 +102,12 @@ function New-XPMUser {
 		$WebResponseResult = $WebResponse.Content | ConvertFrom-Json
 		if ($WebResponseResult.Success) {
 			# Get raw data
-			return $WebResponseResult.Result
+			return(Get-XPMUser | Where-Object { $_.ID -eq $WebResponseResult.Result })
 		}
 		else {
 			# Query error
 			Throw $WebResponseResult.Message
 		}		
-<#
-		# Set RedrockQuery
-		$Query = "SELECT * FROM `"user`""
-
-		# Set Arguments
-		if(-not [System.String]::IsNullOrEmpty($Username)) {
-			# Add Arguments to Statement
-			$Query = ("{0} WHERE username='{1}'" -f $Query, $Username)
-		}
-
-		# Build Uri value from PlatformConnection variable
-		$Uri = ("https://{0}/api//RedRock/Query" -f $PlatformConnection.PodFqdn)
-
-		# Create RedrockQuery
-		$RedrockQuery = @{}
-		$RedrockQuery.Uri = $Uri
-		$RedrockQuery.ContentType = "application/json"
-		$RedrockQuery.Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
-
-		# Build the JsonQuery string and add it to the RedrockQuery
-		$JsonQuery = @{}
-		$JsonQuery.Script = $Query
-
-		$RedrockQuery.Json = $JsonQuery | ConvertTo-Json
-
-		# Connect using RestAPI
-		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $RedrockQuery.Uri -Body $RedrockQuery.Json -ContentType $RedrockQuery.ContentType -Headers $RedrockQuery.Header
-		$WebResponseResult = $WebResponse.Content | ConvertFrom-Json
-		if ($WebResponseResult.Success) {
-			# Get raw data
-			return $WebResponseResult.Result.Results.Row
-		}
-		else {
-			# Query error
-			Throw $WebResponseResult.Message
-		}
-#>
 	}
 	catch {
 		Throw $_.Exception

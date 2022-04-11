@@ -26,7 +26,8 @@
         '.\Lib\Get-XPMGroup.ps1',
         '.\Lib\Get-XPMGroupMembers.ps1',
         '.\Lib\Get-XPMUser.ps1',
-        '.\Lib\New-XPMUser.ps1'
+        '.\Lib\New-XPMUser.ps1',
+        '.\Lib\Remove-XPMUser.ps1'
         )
     PowerShellVersion = '5.0'
     RequiredAssemblies = @()
