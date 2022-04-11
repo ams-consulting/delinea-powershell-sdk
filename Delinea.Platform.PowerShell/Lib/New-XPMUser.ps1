@@ -36,9 +36,21 @@ Return user with username john.doe@domain.name if existing
 #>
 function New-XPMUser {
 	param (
+		[Parameter(Mandatory = $true, HelpMessage = "Specify the User by its Name.")]
+		[System.String]$Name,
+
+		[Parameter(Mandatory = $true, HelpMessage = "Specify the User by its Name.")]
+		[System.String]$DisplayName,
+
+		[Parameter(Mandatory = $true, HelpMessage = "Specify the User by its Name.")]
+		[System.String]$Mail,
+
 		[Parameter(Mandatory = $false, HelpMessage = "Specify the User by its Name.")]
-		[System.String]$Name
-	)
+		[System.String]$Password,
+
+		[Parameter(Mandatory = $false, HelpMessage = "Specify the User by its Name.")]
+		[Switch]$GeneratePassword
+)
 
 	try	{	
 		# Test current connection to the XPM Platform
@@ -48,6 +60,32 @@ function New-XPMUser {
 			Break
 		}
 
+		# Setup values for API request
+		$Uri = ("https://{0}/api//CDirectoryService/CreateUser" -f $PlatformConnection.PodFqdn)
+		$ContentType = "application/json" 
+		$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
+
+		# Create Json payload
+		$JsonPayload = @{}
+		$JsonPayload.Name = $Name
+		$JsonPayload.DisplayName = $DisplayName
+		$JsonPayload.Password = $Password
+		$JsonPayload.confirmPassword = $Password
+
+		$Json = $JsonPayload | ConvertTo-Json
+
+		# Connect using RestAPI
+		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
+		$WebResponseResult = $WebResponse.Content | ConvertFrom-Json
+		if ($WebResponseResult.Success) {
+			# Get raw data
+			return $WebResponseResult.Result
+		}
+		else {
+			# Query error
+			Throw $WebResponseResult.Message
+		}		
+<#
 		# Set RedrockQuery
 		$Query = "SELECT * FROM `"user`""
 
@@ -83,6 +121,7 @@ function New-XPMUser {
 			# Query error
 			Throw $WebResponseResult.Message
 		}
+#>
 	}
 	catch {
 		Throw $_.Exception
