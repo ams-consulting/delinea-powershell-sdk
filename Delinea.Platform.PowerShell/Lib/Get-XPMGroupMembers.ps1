@@ -54,17 +54,13 @@ function Get-XPMGroupMembers {
 			Throw("Cannot read GUID from parameter.")
 		}
 
-		# Build Uri value from PlatformConnection variable
+		# Setup values for API request
 		$Uri = ("https://{0}/api//roles/GetRoleMembers?name={1}" -f $PlatformConnection.PodFqdn, $XpmGroup.ID)
-
-		# Create RedrockQuery
-		$RedrockQuery = @{}
-		$RedrockQuery.Uri = $Uri
-		$RedrockQuery.ContentType = "application/json"
-		$RedrockQuery.Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
+		$ContentType = "application/json"
+		$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
 		# Connect using RestAPI
-		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $RedrockQuery.Uri -Body $null -ContentType $RedrockQuery.ContentType -Headers $RedrockQuery.Header
+		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $Uri -Body $null -ContentType $ContentType -Headers $Header
 		$WebResponseResult = $WebResponse.Content | ConvertFrom-Json
 		if($WebResponseResult.Success) {
 			# Get raw data
