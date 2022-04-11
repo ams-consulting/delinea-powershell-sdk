@@ -18,6 +18,7 @@ $FunctionsList = @(
     'Invoke-XPMQuery',
     # User Management
     'Get-XPMGroup',
+    'New-XPMGroup',
     'Get-XPMGroupMembers',
     'Get-XPMUser',
     'New-XPMUser',

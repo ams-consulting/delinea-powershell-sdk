@@ -12,13 +12,13 @@
 
 <#
 .SYNOPSIS
-This Cmdlet creates a Cloud Directory User on the system.
+This Cmdlet creates a Group on the system.
 
 .DESCRIPTION
-This Cmdlet creates a Cloud Directory User on the system. Can specify the user password on creation or use a securely generated password returned at creation.
+This Cmdlet creates a Group on the system.
 
 .PARAMETER Name
-Specify the Username for User to create (this must be in <name>@<domain> format, e.g. lisa.simpson@delinea.app).
+Specify the Name for Group to create.
 
 .PARAMETER DisplayName
 Specify the Display Name for User to create.
@@ -33,15 +33,15 @@ Specify the Password for User to create (if no Password is specified, a randomly
 None
 
 .OUTPUTS
-[Object]XpmUser
+[Object]XpmGroup
 
 .EXAMPLE
-PS C:\> New-XPMUser -Name lisa.simpson@delinea.app -DisplayName "Elisabeth Mary Simpson" -Email lisa.simpson@domain.mail
+PS C:\> New-XPMGroup -Name lisa.simpson@delinea.app -DisplayName "Elisabeth Mary Simpson" -Email lisa.simpson@domain.mail
 Outputs all Users objects existing on the system
 #>
-function New-XPMUser {
+function New-XPMGroup {
 	param (
-		[Parameter(Mandatory = $true, HelpMessage = "Specify the Username for User to create (this must be in <name>@<domain> format, e.g. lisa.simpson@delinea.app).")]
+		[Parameter(Mandatory = $true, HelpMessage = "Specify the Name for Group to create.")]
 		[System.String]$Name,
 
 		[Parameter(Mandatory = $true, HelpMessage = "Specify the Display Name for User to create.")]

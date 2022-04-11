@@ -71,7 +71,7 @@ function Get-XPMUser {
 		# Connect using RestAPI
 		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
 		$WebResponseResult = $WebResponse.Content | ConvertFrom-Json
-		if ($WebResponseResult.Success) {
+		if($WebResponseResult.Success) {
 			# Get raw data
 			return $WebResponseResult.Result.Results.Row
 		}
