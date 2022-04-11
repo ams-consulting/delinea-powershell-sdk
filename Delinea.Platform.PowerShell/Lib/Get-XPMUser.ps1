@@ -48,6 +48,11 @@ function Get-XPMUser {
 			Break
 		}
 
+		# Setup values for API request
+		$Uri = ("https://{0}/api//RedRock/Query" -f $PlatformConnection.PodFqdn)
+		$ContentType = "application/json"
+		$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
+
 		# Set RedrockQuery
 		$Query = "SELECT * FROM `"user`""
 
@@ -56,24 +61,15 @@ function Get-XPMUser {
 			# Add Arguments to Statement
 			$Query = ("{0} WHERE username='{1}'" -f $Query, $Username)
 		}
+		
+		# Create Json payload
+		$JsonPayload = @{}
+		$JsonPayload.Script = $Query
 
-		# Build Uri value from PlatformConnection variable
-		$Uri = ("https://{0}/api//RedRock/Query" -f $PlatformConnection.PodFqdn)
-
-		# Create RedrockQuery
-		$RedrockQuery = @{}
-		$RedrockQuery.Uri = $Uri
-		$RedrockQuery.ContentType = "application/json"
-		$RedrockQuery.Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
-
-		# Build the JsonQuery string and add it to the RedrockQuery
-		$JsonQuery = @{}
-		$JsonQuery.Script = $Query
-
-		$RedrockQuery.Json = $JsonQuery | ConvertTo-Json
+		$Json = $JsonPayload | ConvertTo-Json
 
 		# Connect using RestAPI
-		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $RedrockQuery.Uri -Body $RedrockQuery.Json -ContentType $RedrockQuery.ContentType -Headers $RedrockQuery.Header
+		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
 		$WebResponseResult = $WebResponse.Content | ConvertFrom-Json
 		if ($WebResponseResult.Success) {
 			# Get raw data
