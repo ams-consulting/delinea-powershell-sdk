@@ -12,31 +12,35 @@
 
 <#
 .SYNOPSIS
-This Cmdlet removes a Cloud Directory User from the system.
+This Cmdlet removes one or more Cloud Directory Users from the system.
 
 .DESCRIPTION
-This Cmdlet removes a Cloud Directory User from the system. Can specify the user by specifying an existing [Object]XpmUser or collection of [Object]XpmUser when looking to bulk remove users (can be retrieved using Get-XpmUser or using pipeline).
+This Cmdlet removes one or more Cloud Directory Users from the system. Can specify the users by specifying a collection of existing [Object]XpmUser (can be retrieved using Get-XpmUser or using pipeline).
 
 .PARAMETER XpmUser
 Specify the User object(s) to be removed.
 
 .INPUTS
-[Object]XpmUser
+[Object[]]XpmUsers
 
 .OUTPUTS
 
 .EXAMPLE
-PS C:\> Remove-XPMUser -XpmUser (Get-XPMUser -Name "lisa.simpson@delinea.app")
+PS C:\> Remove-XPMUser -XpmUsers (Get-XPMUser -Name "lisa.simpson@delinea.app")
 Removes specified user from current Identity tenant.
 
 .EXAMPLE
 PS C:\> Get-XPMUser -Name "lisa.simpson@delinea.app" | Remove-XPMUser
 Removes specified user from current Identity tenant using pipeline.
+
+.EXAMPLE
+PS C:\> Get-XPMUser | Where-Object { $_.lastInvite -ne $null -and $_.lastLogin -eq $null } | Remove-XPMUser
+Removes all users that have been invited and never logged in once from current Identity tenant using pipeline.
 #>
 function Remove-XPMUser {
 	param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true, HelpMessage = "Specify the User object(s) to be removed.")]
-		[System.Object[]]$XpmUser
+		[System.Object[]]$XpmUsers
 	)
 
 	try	{	
@@ -54,9 +58,9 @@ function Remove-XPMUser {
 		
 		# Build Users ID list from arguments
 		$UsersIDList = @()
-		foreach($User in $XpmUser) {
-			# Test if User is valid object and has a GUID
-			if([System.String]::IsNullOrEmpty($User) -or -not [GUID]::TryParse($User.ID.Replace("_", "-"), $([REF][GUID]::Empty))) {
+		foreach($XpmUser in $XpmUsers) {
+			# Test if XpmUser is valid object and has a GUID
+			if([System.String]::IsNullOrEmpty($XpmUser) -or -not [GUID]::TryParse($XpmUser.ID.Replace("_", "-"), $([REF][GUID]::Empty))) {
 				# Add Arguments to Statement
 				Throw("Cannot read GUID from parameter.")
 			}
