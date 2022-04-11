@@ -69,6 +69,7 @@ function New-XPMUser {
 		$Payload = @{}
 		$Payload.Name = $Name
 		$Payload.DisplayName = $DisplayName
+		$Payload.Mail = $Mail
 		$Payload.Password = $Password
 		$Payload.confirmPassword = $Password
 

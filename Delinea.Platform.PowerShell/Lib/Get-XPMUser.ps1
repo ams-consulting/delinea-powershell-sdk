@@ -17,8 +17,8 @@ This Cmdlet retrieves important information about User(s) on the system.
 .DESCRIPTION
 This Cmdlet retrieves important information about User(s) on the system. Can return a single user by specifying the Username.
 
-.PARAMETER Username
-Specify the User by its Username.
+.PARAMETER Name
+Specify the User by its username.
 
 .INPUTS
 None
@@ -31,13 +31,13 @@ PS C:\> Get-XPMUser
 Outputs all Users objects existing on the system
 
 .EXAMPLE
-PS C:\> Get-XPMUser -Username "john.doe@domain.name"
-Return user with username john.doe@domain.name if existing
+PS C:\> Get-XPMUser -Name "john.doe@domain.name"
+Return user with username john.doe@domain.name if exists
 #>
 function Get-XPMUser {
 	param (
-		[Parameter(Mandatory = $false, HelpMessage = "Specify the User by its Username.")]
-		[System.String]$Username
+		[Parameter(Mandatory = $false, HelpMessage = "Specify the User by its username.")]
+		[System.String]$Name
 	)
 
 	try	{	
@@ -57,9 +57,9 @@ function Get-XPMUser {
 		$Query = "SELECT * FROM `"user`""
 
 		# Set Arguments
-		if(-not [System.String]::IsNullOrEmpty($Username)) {
+		if(-not [System.String]::IsNullOrEmpty($Name)) {
 			# Add Arguments to Statement
-			$Query = ("{0} WHERE username='{1}'" -f $Query, $Username)
+			$Query = ("{0} WHERE username='{1}'" -f $Query, $Name)
 		}
 		
 		# Create Json payload
