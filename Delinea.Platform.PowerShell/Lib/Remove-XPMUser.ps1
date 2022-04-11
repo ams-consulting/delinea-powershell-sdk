@@ -15,10 +15,10 @@
 This Cmdlet removes a Cloud Directory User from the system.
 
 .DESCRIPTION
-This Cmdlet removes a Cloud Directory User from the system. Can specify the user by specifying an existing [Object]XpmUser (can be retrieved using Get-XpmUser or using pipeline).
+This Cmdlet removes a Cloud Directory User from the system. Can specify the user by specifying an existing [Object]XpmUser or collection of [Object]XpmUser when looking to bulk remove users (can be retrieved using Get-XpmUser or using pipeline).
 
 .PARAMETER XpmUser
-Specify the User object to be removed.
+Specify the User object(s) to be removed.
 
 .INPUTS
 [Object]XpmUser
@@ -35,8 +35,8 @@ Removes specified user from current Identity tenant using pipeline.
 #>
 function Remove-XPMUser {
 	param (
-		[Parameter(Mandatory = $true, ValueFromPipeline = $true, HelpMessage = "Specify the User object to be removed.")]
-		[System.Object]$XpmUser
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true, HelpMessage = "Specify the User object(s) to be removed.")]
+		[System.Object[]]$XpmUser
 	)
 
 	try	{	
@@ -58,9 +58,15 @@ function Remove-XPMUser {
 		$ContentType = "application/json"
 		$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 		
+		# Build Users ID list from arguments
+		$UsersIDList = @()
+		foreach($User in $XpmUser) {
+			$UsersIDList += $User.ID
+		}
+
 		# Create Json payload
 		$Payload = @{}
-		$Payload.Users = $XpmUser.ID
+		$Payload.Users = $UsersIDList
 
 		$Json = $Payload | ConvertTo-Json
 		
