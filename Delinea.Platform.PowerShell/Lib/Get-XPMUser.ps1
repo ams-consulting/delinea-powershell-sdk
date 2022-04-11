@@ -63,10 +63,10 @@ function Get-XPMUser {
 		}
 		
 		# Create Json payload
-		$JsonPayload = @{}
-		$JsonPayload.Script = $Query
+		$Payload = @{}
+		$Payload.Script = $Query
 
-		$Json = $JsonPayload | ConvertTo-Json
+		$Json = $Payload | ConvertTo-Json
 
 		# Connect using RestAPI
 		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header

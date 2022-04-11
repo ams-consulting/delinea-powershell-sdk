@@ -48,6 +48,11 @@ function Get-XPMGroup {
 			Break
 		}
 
+		# Setup values for API request
+		$Uri = ("https://{0}/api//RedRock/Query" -f $PlatformConnection.PodFqdn)
+		$ContentType = "application/json"
+		$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
+
 		# Set RedrockQuery
 		$Query = "SELECT * FROM `"role`""
 
@@ -57,23 +62,14 @@ function Get-XPMGroup {
 			$Query = ("{0} WHERE name='{1}'" -f $Query, $Name)
 		}
 
-		# Build Uri value from PlatformConnection variable
-		$Uri = ("https://{0}/api//RedRock/Query" -f $PlatformConnection.PodFqdn)
+		# Create Json payload
+		$Payload = @{}
+		$Payload.Script = $Query
 
-		# Create RedrockQuery
-		$RedrockQuery = @{}
-		$RedrockQuery.Uri = $Uri
-		$RedrockQuery.ContentType = "application/json"
-		$RedrockQuery.Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
-
-		# Build the JsonQuery string and add it to the RedrockQuery
-		$JsonQuery = @{}
-		$JsonQuery.Script = $Query
-
-		$RedrockQuery.Json = $JsonQuery | ConvertTo-Json
+		$Json = $Payload | ConvertTo-Json
 
 		# Connect using RestAPI
-		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $RedrockQuery.Uri -Body $RedrockQuery.Json -ContentType $RedrockQuery.ContentType -Headers $RedrockQuery.Header
+		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
 		$WebResponseResult = $WebResponse.Content | ConvertFrom-Json
 		if($WebResponseResult.Success) {
 			# Get raw data
