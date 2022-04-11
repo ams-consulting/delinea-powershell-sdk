@@ -47,12 +47,6 @@ function Remove-XPMUser {
 			Break
 		}
 
-		# Test if XpmUser is valid object and has a GUID
-		if([System.String]::IsNullOrEmpty($XpmUser) -or -not [GUID]::TryParse($XpmUser.ID.Replace("_", "-"), $([REF][GUID]::Empty))) {
-			# Add Arguments to Statement
-			Throw("Cannot read GUID from parameter.")
-		}
-
 		# Setup values for API request
 		$Uri = ("https://{0}/api//UserMgmt/RemoveUsers" -f $PlatformConnection.PodFqdn)
 		$ContentType = "application/json"
@@ -61,6 +55,12 @@ function Remove-XPMUser {
 		# Build Users ID list from arguments
 		$UsersIDList = @()
 		foreach($User in $XpmUser) {
+			# Test if User is valid object and has a GUID
+			if([System.String]::IsNullOrEmpty($User) -or -not [GUID]::TryParse($User.ID.Replace("_", "-"), $([REF][GUID]::Empty))) {
+				# Add Arguments to Statement
+				Throw("Cannot read GUID from parameter.")
+			}
+			# Add User ID to list
 			$UsersIDList += $User.ID
 		}
 
