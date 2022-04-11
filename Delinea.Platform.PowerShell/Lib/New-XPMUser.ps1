@@ -66,13 +66,13 @@ function New-XPMUser {
 		$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
 		# Create Json payload
-		$JsonPayload = @{}
-		$JsonPayload.Name = $Name
-		$JsonPayload.DisplayName = $DisplayName
-		$JsonPayload.Password = $Password
-		$JsonPayload.confirmPassword = $Password
+		$Payload = @{}
+		$Payload.Name = $Name
+		$Payload.DisplayName = $DisplayName
+		$Payload.Password = $Password
+		$Payload.confirmPassword = $Password
 
-		$Json = $JsonPayload | ConvertTo-Json
+		$Json = $Payload | ConvertTo-Json
 
 		# Connect using RestAPI
 		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
