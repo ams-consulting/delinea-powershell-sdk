@@ -24,6 +24,8 @@ $FunctionsList = @(
     'Remove-XPMGroupMembers',
     'Get-XPMUser',
     'New-XPMUser',
-    'Remove-XPMUser'
+    'Remove-XPMUser',
+    # Authentication
+    'Get-XPMAuthProfile'    
 )
 Export-ModuleMember -Function $FunctionsList
