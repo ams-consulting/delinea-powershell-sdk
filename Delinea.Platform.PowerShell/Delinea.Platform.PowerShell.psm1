@@ -20,6 +20,8 @@ $FunctionsList = @(
     'Get-XPMGroup',
     'New-XPMGroup',
     'Get-XPMGroupMembers',
+    'Add-XPMGroupMembers',
+    'Remove-XPMGroupMembers',
     'Get-XPMUser',
     'New-XPMUser',
     'Remove-XPMUser'

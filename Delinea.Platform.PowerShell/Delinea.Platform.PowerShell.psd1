@@ -20,14 +20,16 @@
     ModuleVersion = '0.2.41122'
     NestedModules = @(
         # Loading Cmdlets
+        '.\Lib\Add-XPMGroupMembers.ps1',
         '.\Lib\Connect-XPMPlatform.ps1',
         '.\Lib\Disconnect-XPMPlatform.ps1',
         '.\Lib\Invoke-XPMQuery.ps1',
         '.\Lib\Get-XPMGroup.ps1',
-        '.\Lib\New-XPMGroup.ps1',
         '.\Lib\Get-XPMGroupMembers.ps1',
         '.\Lib\Get-XPMUser.ps1',
+        '.\Lib\New-XPMGroup.ps1',
         '.\Lib\New-XPMUser.ps1',
+        '.\Lib\Remove-XPMGroupMembers.ps1',
         '.\Lib\Remove-XPMUser.ps1'
         )
     PowerShellVersion = '5.0'

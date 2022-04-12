@@ -60,12 +60,12 @@ function Remove-XPMUser {
 		$UsersIDList = @()
 		foreach($XpmUser in $XpmUsers) {
 			# Test if XpmUser is valid object and has a GUID
-			if([System.String]::IsNullOrEmpty($XpmUser) -or -not [GUID]::TryParse($XpmUser.ID.Replace("_", "-"), $([REF][GUID]::Empty))) {
+			if([System.String]::IsNullOrEmpty($XpmUser) -or -not [GUID]::TryParse($XpmUser.ID, $([REF][GUID]::Empty))) {
 				# Add Arguments to Statement
 				Throw("Cannot read GUID from parameter.")
 			}
 			# Add User ID to list
-			$UsersIDList += $User.ID
+			$UsersIDList += $XpmUser.ID
 		}
 
 		# Create Json payload

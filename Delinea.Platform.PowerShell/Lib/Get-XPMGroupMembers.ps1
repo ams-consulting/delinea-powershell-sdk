@@ -55,7 +55,7 @@ function Get-XPMGroupMembers {
 		}
 
 		# Setup values for API request
-		$Uri = ("https://{0}/api//roles/GetRoleMembers?name={1}" -f $PlatformConnection.PodFqdn, $XpmGroup.ID)
+		$Uri = ("https://{0}/api//Roles/GetRoleMembers?name={1}" -f $PlatformConnection.PodFqdn, $XpmGroup.ID)
 		$ContentType = "application/json"
 		$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
