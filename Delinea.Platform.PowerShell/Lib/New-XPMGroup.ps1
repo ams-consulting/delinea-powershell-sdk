@@ -38,7 +38,7 @@ function New-XPMGroup {
 		[Parameter(Mandatory = $true, HelpMessage = "Specify the Name for Group to create.")]
 		[System.String]$Name,
 
-		[Parameter(Mandatory = $true, HelpMessage = "Specify the Description for Group to create.")]
+		[Parameter(Mandatory = $false, HelpMessage = "Specify the Description for Group to create.")]
 		[System.String]$Description
 )
 
