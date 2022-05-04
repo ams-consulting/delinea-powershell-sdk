@@ -50,8 +50,8 @@ function New-XPMUser {
 		[Parameter(Mandatory = $true, HelpMessage = "Specify the Email for User to create.")]
 		[System.String]$Mail,
 
-		[Parameter(Mandatory = $false, HelpMessage = "Specify the Password for User to create (if no Password is specified, a randomly generated one will be assigned instead).")]
-		[System.String]$Password
+		[Parameter(Mandatory = $false, HelpMessage = "Specify the Password for User to create as a SecureString (if no Password is specified, a randomly generated one will be assigned instead).")]
+		[System.Security.SecureString]$Password
 )
 
 	try	{	
@@ -92,13 +92,16 @@ function New-XPMUser {
 		$ContentType = "application/json" 
 		$Header = @{ "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
+		# Convert SecureString in Plain Text
+		$PlainTextPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password))
+
 		# Create Json payload
 		$Payload = @{}
 		$Payload.Name = $Name
 		$Payload.DisplayName = $DisplayName
 		$Payload.Mail = $Mail
-		$Payload.Password = $Password
-		$Payload.confirmPassword = $Password
+		$Payload.Password = $PlainTextPassword
+		$Payload.confirmPassword = $PlainTextPassword
 
 		$Json = $Payload | ConvertTo-Json
 
