@@ -1,4 +1,10 @@
 # CHANGELOG
+**0.3.50422 - BETA**
+
+- Removing deprecated Cross-Site Scripting prevention from Headers
+- Removing deprecated RedRock Query API and replacing it with RunReport queries
+- Adding Authentication Profiles support (read-only)
+
 **0.2.41122 - BETA**
 
 - Adding User management
