@@ -23,7 +23,7 @@
         '.\Lib\Add-XPMGroupMembers.ps1',
         '.\Lib\Connect-XPMPlatform.ps1',
         '.\Lib\Disconnect-XPMPlatform.ps1',
-        '.\Lib\Invoke-XPMQuery.ps1',
+        '.\Lib\Invoke-XPMReport.ps1',
         '.\Lib\Get-XPMAuthProfile.ps1',
         '.\Lib\Get-XPMGroup.ps1',
         '.\Lib\Get-XPMGroupMembers.ps1',

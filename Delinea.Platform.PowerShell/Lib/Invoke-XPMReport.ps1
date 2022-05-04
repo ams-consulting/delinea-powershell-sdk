@@ -29,20 +29,16 @@ Specify the file that contains the query to invoke.
 .OUTPUTS
 
 .EXAMPLE
-PS C:\> Invoke-XPMQuery -Query "SELECT * From User"
-Outputs all Users objects existing on the system according to the query.
-
-.EXAMPLE
-PS C:\> Invoke-XPMQuery -File .\get-all-users.sql
-Invoke the query from file named get-all-users.sql
+PS C:\> Invoke-XPMReport -ID "user_all"
+Outputs all Users objects existing on the system according to the report specified by its ID.
 #>
-function Invoke-XPMQuery {
+function Invoke-XPMReport {
 	param (
-		[Parameter(Mandatory = $false, HelpMessage = "Specify the query to invoke.")]
-		[System.String]$Query,
+		[Parameter(Mandatory = $true, HelpMessage = "Specify the report ID to invoke.")]
+		[System.String]$ID,
 
-		[Parameter(Mandatory = $false, HelpMessage = "Specify the file that contains the query to invoke.")]
-		[System.String]$File
+		[Parameter(Mandatory = $false, HelpMessage = "Optionnaly specify the parameters to use for this report.")]
+		[System.Object]$Parameters
 	)
 
 	try	{	
@@ -53,31 +49,22 @@ function Invoke-XPMQuery {
 			Break
 		}
 
-		if(-not [System.String]::IsNullOrEmpty($File)) {
-			# Test file
-			if (Test-Path -Path $File) {
-				# Get RedrockQuery from file
-				$Query = Get-Content -Path $File
-			}
-			else {
-				Throw ("Cannot open file {0}" -f $File)
-			}
-		}
-		elseif ([System.String]::IsNullOrEmpty($Query)) {
-			# Get RedrockQuery from file
-			Throw ("You must specify a query using file or command line argument.")
-		}
-
 		# Setup values for API request
-		$Uri = ("https://{0}/api//RedRock/Query" -f $PlatformConnection.PodFqdn)
+		$Uri = ("https://{0}/api//Report/RunReport" -f $PlatformConnection.PodFqdn)
 		$ContentType = "application/json"
 		$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
 		# Create Json payload
 		$Payload = @{}
-		$Payload.Script = $Query
+		$Payload.ID = $ID
 
-		$Json = $Payload | ConvertTo-Json
+		if(-not [System.String]::IsNullOrEmpty($Parameters)) {
+			# Add Parameters to report
+			$Payload.Args = @{}
+			$Payload.Args.Parameters = @($Parameters) 
+		}
+
+		$Json = $Payload | ConvertTo-Json -Depth 3
 
 		# Connect using RestAPI
 		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header

@@ -36,6 +36,9 @@ Return user with username john.doe@domain.name if exists
 #>
 function Get-XPMUser {
 	param (
+		[Parameter(Mandatory = $false, HelpMessage = "Specify the User by its ID.")]
+		[System.String]$ID,
+
 		[Parameter(Mandatory = $false, HelpMessage = "Specify the User by its username.")]
 		[System.String]$Name
 	)
@@ -49,24 +52,42 @@ function Get-XPMUser {
 		}
 
 		# Setup values for API request
-		$Uri = ("https://{0}/api//RedRock/Query" -f $PlatformConnection.PodFqdn)
+		$Uri = ("https://{0}/api//Report/RunReport" -f $PlatformConnection.PodFqdn)
 		$ContentType = "application/json"
 		$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
-		# Set RedrockQuery
-		$Query = "SELECT * FROM `"user`""
-
-		# Set Arguments
-		if(-not [System.String]::IsNullOrEmpty($Name)) {
-			# Add Arguments to Statement
-			$Query = ("{0} WHERE username='{1}'" -f $Query, $Name)
-		}
-		
 		# Create Json payload
 		$Payload = @{}
-		$Payload.Script = $Query
 
-		$Json = $Payload | ConvertTo-Json
+		# Set Arguments
+		if(-not [System.String]::IsNullOrEmpty($ID)) {
+			# Get user by ID
+			$Payload.ID = "user_byid"
+			
+			$Parameters = @{}
+			$Parameters.Name = "userid"
+			$Parameters.Value = $ID
+
+			$Payload.Args = @{}
+			$Payload.Args.Parameters = @($Parameters) 
+		}
+		elseif(-not [System.String]::IsNullOrEmpty($Name)) {
+			# Get user by name
+			$Payload.ID = "user_searchbyname"
+			
+			$Parameters = @{}
+			$Parameters.Name = "searchString"
+			$Parameters.Value = $Name
+
+			$Payload.Args = @{}
+			$Payload.Args.Parameters = @($Parameters) 
+		}
+		else {
+			# Get all users
+			$Payload.ID = "user_all"
+		}
+
+		$Json = $Payload | ConvertTo-Json -Depth 3
 
 		# Connect using RestAPI
 		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header

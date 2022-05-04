@@ -15,7 +15,7 @@ $FunctionsList = @(
     # Core Cmdlets
     'Connect-XPMPlatform',
     'Disconnect-XPMPlatform',
-    'Invoke-XPMQuery',
+    'Invoke-XPMReport',
     # User Management
     'Get-XPMGroup',
     'New-XPMGroup',
