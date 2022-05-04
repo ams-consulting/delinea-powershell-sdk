@@ -87,7 +87,7 @@ function Connect-XPMPlatform {
             # Get Bearer Token from OAuth2 Client App
             $Uri = ("https://{0}/oauth2/token/{1}" -f $Url, $Client)
             $ContentType = "application/x-www-form-urlencoded" 
-            $Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "True"; "Authorization" = ("Basic {0}" -f $Secret) }
+            $Header = @{ "Authorization" = ("Basic {0}" -f $Secret) }
             Write-Host("Connecting to Centrify Identity Services (https://{0}) using OAuth2 Client Credentials flow" -f $Url)
 
             # Format body
@@ -106,7 +106,7 @@ function Connect-XPMPlatform {
             # Validate Bearer Token and obtain Session details
             $Uri = ("https://{0}/Security/Whoami" -f $Url)
             $ContentType = "application/json" 
-            $Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "1"; "Authorization" = ("Bearer {0}" -f $BearerToken) }
+            $Header = @{ "Authorization" = ("Bearer {0}" -f $BearerToken) }
 
             # Format Json query
             $Json = @{} | ConvertTo-Json
@@ -155,7 +155,7 @@ function Connect-XPMPlatform {
             # Setup variable for interactive connection using MFA
             $Uri = ("https://{0}/Security/StartAuthentication" -f $Url)
             $ContentType = "application/json" 
-            $Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true" }
+            $Header = @{}
             Write-Host("Connecting to XPM PLatform Identity Services (https://{0}) as {1}`n" -f $Url, $User)
 
             # Format Json query
@@ -234,7 +234,7 @@ function Connect-XPMPlatform {
                     # Send Challenge answer
                     $Uri = ("https://{0}/Security/AdvanceAuthentication" -f $Url)
                     $ContentType = "application/json" 
-                    $Header = @{ "X-Centrify-NATIVE-CLIENT" = "true" }
+                    $Header = @{}
 
                     # Send answer
                     $WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
@@ -248,7 +248,7 @@ function Connect-XPMPlatform {
                             # Send Poll message to Delinea Identity Platform after pressing enter key
                             $Uri = ("https://{0}/Security/AdvanceAuthentication" -f $Url)
                             $ContentType = "application/json" 
-                            $Header = @{ "X-Centrify-NATIVE-CLIENT" = "true" }
+                            $Header = @{}
 
                             # Format Json query
                             $Auth = @{}

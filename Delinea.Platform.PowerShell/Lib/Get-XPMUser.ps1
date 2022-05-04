@@ -54,7 +54,7 @@ function Get-XPMUser {
 		# Setup values for API request
 		$Uri = ("https://{0}/api//Report/RunReport" -f $PlatformConnection.PodFqdn)
 		$ContentType = "application/json"
-		$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
+		$Header = @{ "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
 		# Create Json payload
 		$Payload = @{}

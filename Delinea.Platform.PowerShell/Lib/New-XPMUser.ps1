@@ -66,7 +66,7 @@ function New-XPMUser {
 			# If password is empty, then generate password using default policy
 			$Uri = ("https://{0}/api//Core/GeneratePassword" -f $PlatformConnection.PodFqdn)
 			$ContentType = "application/json"
-			$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
+			$Header = @{ "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
 			# Create Json payload
 			$Payload = @{}
@@ -90,7 +90,7 @@ function New-XPMUser {
 		# Setup values for API request
 		$Uri = ("https://{0}/api//CDirectoryService/CreateUser" -f $PlatformConnection.PodFqdn)
 		$ContentType = "application/json" 
-		$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
+		$Header = @{ "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
 		# Create Json payload
 		$Payload = @{}

@@ -51,7 +51,7 @@ function Get-XPMAuthProfile {
 		# Setup values for API request
 		$Uri = ("https://{0}/api//AuthProfile/GetProfileList" -f $PlatformConnection.PodFqdn)
 		$ContentType = "application/json"
-		$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
+		$Header = @{ "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
 		# Connect using RestAPI
 		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header

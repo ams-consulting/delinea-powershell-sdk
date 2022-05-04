@@ -56,7 +56,7 @@ function Add-XPMGroupMembers {
 		# Setup values for API request
 		$Uri = ("https://{0}/api//RedRock/Query" -f $PlatformConnection.PodFqdn)
 		$ContentType = "application/json"
-		$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
+		$Header = @{ "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
 		# Set RedrockQuery
 		$Query = ("SELECT * FROM `"role`" WHERE name='{0}'" -f $Name)
@@ -95,7 +95,7 @@ function Add-XPMGroupMembers {
 			# Setup values for API request
 			$Uri = ("https://{0}/api//Roles/UpdateRole" -f $PlatformConnection.PodFqdn)
 			$ContentType = "application/json"
-			$Header = @{ "X-CENTRIFY-NATIVE-CLIENT" = "true"; "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
+			$Header = @{ "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
 			# Create Json payload
 			$Payload = @{}
