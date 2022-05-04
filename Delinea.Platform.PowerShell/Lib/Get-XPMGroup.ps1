@@ -32,11 +32,22 @@ Outputs all Groups objects existing on the system
 
 .EXAMPLE
 PS C:\> Get-XPMGroup -Name "Product Group"
-Return group with Name "Product Group" if existing
+Return group with Name "Product Group" if exists
+
+.EXAMPLE
+PS C:\> Get-XPMGroup -Name "TEST%"
+Return all groups with Name starting with "TEST" if exists
+
+.EXAMPLE
+PS C:\> Get-XPMGroup -ID 12345678_ABCD_EFGH_IJKL_1234567890AB
+Return group with ID "12345678_ABCD_EFGH_IJKL_1234567890AB" if exists
 #>
 function Get-XPMGroup {
 	param (
-		[Parameter(Mandatory = $false, HelpMessage = "Specify the Group by its Name.")]
+		[Parameter(Mandatory = $false, HelpMessage = "Specify the Group by its ID.")]
+		[System.String]$ID,
+
+		[Parameter(Mandatory = $false, HelpMessage = "Specify the Group by its username.")]
 		[System.String]$Name
 	)
 
@@ -49,24 +60,42 @@ function Get-XPMGroup {
 		}
 
 		# Setup values for API request
-		$Uri = ("https://{0}/api//RedRock/Query" -f $PlatformConnection.PodFqdn)
+		$Uri = ("https://{0}/api//Report/RunReport" -f $PlatformConnection.PodFqdn)
 		$ContentType = "application/json"
 		$Header = @{ "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
 
-		# Set RedrockQuery
-		$Query = "SELECT * FROM `"role`""
-
-		# Set Arguments
-		if(-not [System.String]::IsNullOrEmpty($Name)) {
-			# Add Arguments to Statement
-			$Query = ("{0} WHERE name='{1}'" -f $Query, $Name)
-		}
-
 		# Create Json payload
 		$Payload = @{}
-		$Payload.Script = $Query
 
-		$Json = $Payload | ConvertTo-Json
+		# Set Arguments
+		if(-not [System.String]::IsNullOrEmpty($ID)) {
+			# Get group by ID
+			$Payload.ID = "role_byid"
+			
+			$Parameters = @{}
+			$Parameters.Name = "roleid"
+			$Parameters.Value = $ID
+
+			$Payload.Args = @{}
+			$Payload.Args.Parameters = @($Parameters) 
+		}
+		elseif(-not [System.String]::IsNullOrEmpty($Name)) {
+			# Get role by name
+			$Payload.ID = "role_searchbyname"
+			
+			$Parameters = @{}
+			$Parameters.Name = "searchString"
+			$Parameters.Value = $Name
+
+			$Payload.Args = @{}
+			$Payload.Args.Parameters = @($Parameters) 
+		}
+		else {
+			# Get all users
+			$Payload.ID = "all_role"
+		}
+
+		$Json = $Payload | ConvertTo-Json -Depth 3
 
 		# Connect using RestAPI
 		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
