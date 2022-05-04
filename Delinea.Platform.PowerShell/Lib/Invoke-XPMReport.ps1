@@ -37,8 +37,11 @@ function Invoke-XPMReport {
 		[Parameter(Mandatory = $true, HelpMessage = "Specify the report ID to invoke.")]
 		[System.String]$ID,
 
-		[Parameter(Mandatory = $false, HelpMessage = "Optionnaly specify the parameters to use for this report.")]
-		[System.Object]$Parameters
+		[Parameter(Mandatory = $false, HelpMessage = "Optionnaly specify the parameter's name to use for this report.")]
+		[System.String]$Name,
+
+		[Parameter(Mandatory = $false, HelpMessage = "Optionnaly specify the parameter's value to use for this report.")]
+		[System.String]$Value
 	)
 
 	try	{	
@@ -58,7 +61,11 @@ function Invoke-XPMReport {
 		$Payload = @{}
 		$Payload.ID = $ID
 
-		if(-not [System.String]::IsNullOrEmpty($Parameters)) {
+		if(-not [System.String]::IsNullOrEmpty($Name) -and -not [System.String]::IsNullOrEmpty($Value)) {
+			# Set Parameters for the report
+			$Parameters = @{}
+			$Parameters.Name = $Name
+			$Parameters.Value = $Value
 			# Add Parameters to report
 			$Payload.Args = @{}
 			$Payload.Args.Parameters = @($Parameters) 
