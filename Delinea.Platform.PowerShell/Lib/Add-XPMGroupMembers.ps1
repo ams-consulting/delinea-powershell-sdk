@@ -54,18 +54,24 @@ function Add-XPMGroupMembers {
 		}
 
 		# Setup values for API request
-		$Uri = ("https://{0}/api//RedRock/Query" -f $PlatformConnection.PodFqdn)
+		$Uri = ("https://{0}/api//Report/RunReport" -f $PlatformConnection.PodFqdn)
 		$ContentType = "application/json"
 		$Header = @{ "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
-
-		# Set RedrockQuery
-		$Query = ("SELECT * FROM `"role`" WHERE name='{0}'" -f $Name)
 
 		# Create Json payload
 		$Payload = @{}
 		$Payload.Script = $Query
+		# Get group by name
+		$Payload.ID = "role_searchbyname"
+		
+		$Parameters = @{}
+		$Parameters.Name = "searchString"
+		$Parameters.Value = $Name
 
-		$Json = $Payload | ConvertTo-Json
+		$Payload.Args = @{}
+		$Payload.Args.Parameters = @($Parameters) 
+
+		$Json = $Payload | ConvertTo-Json -Depth 3
 
 		# Connect using RestAPI
 		$WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
