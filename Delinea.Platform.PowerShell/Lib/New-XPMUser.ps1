@@ -79,21 +79,21 @@ function New-XPMUser {
 			$WebResponseResult = $WebResponse.Content | ConvertFrom-Json
 			if($WebResponseResult.Success) {
 				# Get raw data
-				$Password = $WebResponseResult.Result
+				$PlainTextPassword = $WebResponseResult.Result
 			}
 			else {
 				# Query error
 				Throw $WebResponseResult.Message
 			}		
+		} else {
+			# Convert SecureString in Plain Text
+			$PlainTextPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password))
 		}
 
 		# Setup values for API request
 		$Uri = ("https://{0}/api//CDirectoryService/CreateUser" -f $PlatformConnection.PodFqdn)
 		$ContentType = "application/json" 
 		$Header = @{ "Authorization" = ("Bearer {0}" -f $PlatformConnection.OAuthTokens.access_token) }
-
-		# Convert SecureString in Plain Text
-		$PlainTextPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password))
 
 		# Create Json payload
 		$Payload = @{}
