@@ -6,7 +6,10 @@
 
 param (
 	[Parameter(Mandatory = $true, Position = 0, HelpMessage = "Specify the CSV file to perform import actions.")]
-	[System.String]$File
+	[System.String]$File,
+
+	[Parameter(Mandatory = $false, HelpMessage = "Commit import actions.")]
+	[Switch]$Commit
 )
 
 # Add PowerShell Module to session if not already loaded
@@ -41,15 +44,46 @@ if (Test-Path -Path $File) {
     $Data = Import-Csv -Path $File
     if ($Data -ne [Void]$null) {
         Write-Host ("CSV file '{0}' loaded." -f $File)
+
+        # Caching list of users and groups
+        Write-Host "Caching users and groups..."
+        $UserCache = Get-XPMUser
+        $GroupCache = @()
+        Get-XPMGroup | ForEach-Object {
+            # Ignore system groups
+            if ($_.ID -ne "Everybody" -and $_.ID -ne "sysadmin") {
+                # Get group members
+                $GroupMembers = (Get-XPMGroupMembers -XpmGroup $_ | Select-Object -Property Name).Name
+                # Set group details
+                $Group = New-Object System.Object
+                $Group | Add-Member -MemberType NoteProperty -Name Name -Value $_.Name
+                $Group | Add-Member -MemberType NoteProperty -Name Members -Value $GroupMembers
+                # Add group to cache
+                $GroupCache += $Group
+            }
+        }
+        Write-Host "Caching complete."
+        
+        # Check if commit is enabled
+        if (-not $Commit.IsPresent) {
+            Write-Warning "Commit option is disabled. Actions will be preview only. Use -Commit on command line to perform actions on chosen tenant."
+        }
+    
         # Proceed list of users
         foreach ($Entry in $Data) {
             # Verify if user already exist
-            $XPMUser = Get-XPMUser -Name $Entry.Name
-            if ($XPMUser -eq [Void]$null) {
-                # Create user
-                $XPMUser = New-XPMUser -Name $Entry.Name -DisplayName $Entry.DisplayName -Mail $Entry.Mail
-                Write-Host ("User '{0}' has been created." -f $XPMUser.Username)
+            if ($Entry.Name -notin $UserCache.Username) {
+                if ($Commit.IsPresent) {
+                    # Create user
+                    $XPMUser = New-XPMUser -Name $Entry.Name -DisplayName $Entry.DisplayName -Mail $Entry.Mail
+                    Write-Host ("User '{0}' has been created." -f $XPMUser.Username) -ForegroundColor Green
+                } else {
+                    # Preview user
+                    Write-Host ("User '{0}' will be created." -f $Entry.Name)
+                }
             } else {
+                # Get user from list
+                $XPMUser = $UserCache | Where-Object { $_.Username -eq $Entry.Name }
                 Write-Host ("User '{0}' already exists." -f $Entry.Name)
             }
             
@@ -58,15 +92,31 @@ if (Test-Path -Path $File) {
                 # Each group name is comma separated
                 $Entry.Groups.Split(',') | ForEach-Object {
                     # Get group if exist
-                    $XPMGroup = Get-XPMGroup -Name $_
-                    if ($XPMGroup -eq [Void]$null) {
-                        # Create group
-                        $XPMGroup = New-XPMGroup -Name $_
-                        Write-Debug ("Group '{0}' has been created." -f $_)
+                    if ($_ -notin $GroupCache.Name) {
+                        if ($Commit.IsPresent) {
+                            # Create group
+                            $XPMGroup = New-XPMGroup -Name $_
+                            # Set group details
+                            $Group = New-Object System.Object
+                            $Group | Add-Member -MemberType NoteProperty -Name Name -Value $XPMGroup.Name
+                            $Group | Add-Member -MemberType NoteProperty -Name Members -Value @()
+                            # Add group to cache
+                            $GroupCache += $Group
+                            Write-Host ("Group '{0}' has been created." -f $_) -ForegroundColor Green
+                        } else {
+                            Write-Host ("Group '{0}' will be created." -f $_)
+                        }
                     }
-                    # Add user to group
-                    $XPMUser | Add-XPMGroupMembers -Name $_
-                    Write-Debug ("User '{0}' has been added to Group '{1}'." -f $XPMUser.Name, $_)
+                    # Check if user member of the group
+                    if ($XPMUser.Username -notin $GroupCache.Members) {
+                        if ($Commit.IsPresent) {
+                            # Add user to group
+                            $XPMUser | Add-XPMGroupMembers -Name $_
+                            Write-Host ("User '{0}' has been added to Group '{1}'." -f $XPMUser.Username, $_) -ForegroundColor Green
+                        } else {
+                            Write-Host ("User '{0}' will be added to Group '{1}'." -f $XPMUser.Username, $_)
+                        }
+                    }
                 }
             }
         }
