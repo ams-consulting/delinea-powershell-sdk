@@ -45,6 +45,17 @@ if (Test-Path -Path $File) {
     if ($Data -ne [Void]$null) {
         Write-Host ("CSV file '{0}' loaded." -f $File)
 
+        # Looking for duplicates
+        $Duplicates = (Compare-Object -ReferenceObject ($Data.Name | Sort-Object | Get-Unique) -DifferenceObject $Data.Name).InputObject
+        if ($Duplicates -ne [Void]$null) {
+            # Print list of duplicate users
+            $Duplicates | ForEach-Object {
+                Write-Host ("User '{0}' is duplicate in CSV file." -f $_) -ForegroundColor Red
+            }
+            Write-Host "Cannot import users with same username. Fix CSV file and try again."
+            Exit
+        }
+
         # Caching list of users and groups
         Write-Host "Caching users and groups..."
         $UserCache = Get-XPMUser
