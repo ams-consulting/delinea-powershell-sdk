@@ -1,4 +1,9 @@
 # CHANGELOG
+**0.4.81122 - BETA**
+
+- Updating contact details
+- Removing copyright information as this module is now developed with no links to Delinea
+
 **0.3.50422 - BETA**
 
 - Removing deprecated Cross-Site Scripting prevention from Headers
