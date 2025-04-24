@@ -47,6 +47,16 @@ function Remove-PSModule {
     Remove-Item -Path $Path -Recurse -Force
 }
 
+
+function Test-PSVersion {
+	# Get current PowerShell version and edition
+	Write-Host ("You are running PowerShell {0} edition (version {1})." -f $PSVersionTable.PSEdition, $PSVersionTable.PSVersion)
+	if ($PSVersionTable.PSEdition -eq "Core") {
+		Write-Warning "This PowerShell module is NOT compatible with PowerShell Core edition. Aborting installation."
+		Exit 1
+	}
+}
+
 function Test-AdminRight {
 	# Get current user identity and principal
     $Identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
@@ -92,7 +102,8 @@ function Get-PSModulePath {
 # Main Logic #
 ##############
 
-# Validate Local Admin privileges
+# Validate PSEdition and Local Admin privileges
+Test-PSVersion
 Test-AdminRight
 
 # Starting installation
