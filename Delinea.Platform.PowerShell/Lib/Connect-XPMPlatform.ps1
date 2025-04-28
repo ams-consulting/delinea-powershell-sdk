@@ -4,10 +4,27 @@
 # Author   : Fabrice Viguier
 # Contact  : support AT ams-consulting.uk
 # Release  : 21/02/2022
-# Copyright: (c) 2024 AMS Consulting. Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
-#            You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software
-#            distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#            See the License for the specific language governing permissions and limitations under the License.
+# License  : MIT License
+#
+# Copyright (c) 2024 AMS Consulting.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 ###########################################################################################
 
 <#
@@ -79,11 +96,11 @@ function Connect-XPMPlatform {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
         # Delete any existing connexion cache
-        if($Global:PlatformConnection -ne [Void]$null) {
+        if ($Global:PlatformConnection -ne [Void]$null) {
             $Global:PlatformConnection = $null
         }
 
-        if(-not [System.String]::IsNullOrEmpty($Client)) {
+        if (-not [System.String]::IsNullOrEmpty($Client)) {
             # Get Bearer Token from OAuth2 Client App
             $Uri = ("https://{0}/oauth2/token/{1}" -f $Url, $Client)
             $ContentType = "application/x-www-form-urlencoded" 
@@ -96,10 +113,9 @@ function Connect-XPMPlatform {
             # Connect using OAuth2 Client
             $WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable PASSession -Uri $Uri -Body $Body -ContentType $ContentType -Headers $Header
             $WebResponseResult = $WebResponse.Content | ConvertFrom-Json
-            if([System.String]::IsNullOrEmpty($WebResponseResult.access_token)) {
+            if ([System.String]::IsNullOrEmpty($WebResponseResult.access_token)) {
                 Throw("OAuth2 Client authentication error.")
-            }
-            else {
+            } else {
                 $BearerToken = $WebResponseResult.access_token
             }
 
@@ -114,7 +130,7 @@ function Connect-XPMPlatform {
             # Connect using bearer token
             $WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
             $WebResponseResult = $WebResponse.Content | ConvertFrom-Json
-            if($WebResponseResult.Success) {
+            if ($WebResponseResult.Success) {
                 # Get Connection details
                 $Connection = $WebResponseResult.Result
 
@@ -129,29 +145,25 @@ function Connect-XPMPlatform {
                 $Global:PlatformConnection = $Connection
 
                 # Return information values to confirm connection success
-                return($Connection | Select-Object -Property CustomerId, User, PodFqdn | Format-List)
-            }
-            else {
+                return ($Connection | Select-Object -Property CustomerId, User, PodFqdn | Format-List)
+            } else {
                 Throw("Invalid Bearer Token.")
             }
-        }
-        elseif($EncodeSecret.IsPresent) {
+        } elseif ($EncodeSecret.IsPresent) {
             # Get Confidential Client name and password
             $Client = Read-Host "Confidential Client name"
             $SecureString = Read-Host "Password" -AsSecureString
             $Password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureString))
             # Combine ClientID and Password then encode authentication string in Base64
             $AuthenticationString = ("{0}:{1}" -f $Client, $Password)
-            return([System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($AuthenticationString)))
-        }		
-        elseif($DecodeSecret.IsPresent) {
+            return ([System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($AuthenticationString)))
+        } elseif ($DecodeSecret.IsPresent) {
             # Get Base64 secret to decode
             $Secret = Read-Host "Secret"
             # Decode authentication string from Base64
             $AuthenticationString = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($Secret))
-            return(@{ "ConfidentialClient" = $AuthenticationString.Split(':')[0]; "Password" = $AuthenticationString.Split(':')[1]})
-        }		
-        else {
+            return (@{ "ConfidentialClient" = $AuthenticationString.Split(':')[0]; "Password" = $AuthenticationString.Split(':')[1]})
+        } else {
             # Setup variable for interactive connection using MFA
             $Uri = ("https://{0}/Security/StartAuthentication" -f $Url)
             $ContentType = "application/json" 
@@ -169,36 +181,34 @@ function Connect-XPMPlatform {
 
             # Getting Authentication challenges from initial Response
             $InitialResponseResult = $InitialResponse.Content | ConvertFrom-Json
-            if($InitialResponseResult.Success) {
+            if ($InitialResponseResult.Success) {
                 # Go through all challenges
-                foreach($Challenge in $InitialResponseResult.Result.Challenges) {
+                foreach ($Challenge in $InitialResponseResult.Result.Challenges) {
                     # Go through all available mechanisms
-                    if($Challenge.Mechanisms.Count -gt 1) {
+                    if ($Challenge.Mechanisms.Count -gt 1) {
                         Write-Host("`n[Available mechanisms]")
                         # More than one mechanism available
                         $MechanismIndex = 1
-                        foreach($Mechanism in $Challenge.Mechanisms) {
+                        foreach ($Mechanism in $Challenge.Mechanisms) {
                             # Show Mechanism
                             Write-Host("{0} - {1}" -f $MechanismIndex++, $Mechanism.PromptSelectMech)
                         }
                         # Prompt for Mechanism selection
                         $Selection = Read-Host -Prompt "Please select a mechanism [1]"
                         # Default selection
-                        if([System.String]::IsNullOrEmpty($Selection)) {
+                        if ([System.String]::IsNullOrEmpty($Selection)) {
                             # Default selection is 1
                             $Selection = 1
                         }
                         # Validate selection
-                        if($Selection -gt $Challenge.Mechanisms.Count) {
+                        if ($Selection -gt $Challenge.Mechanisms.Count) {
                             # Selection must be in range
-                            Throw("Invalid selection. Authentication challenge aborted.")
+                            Throw ("Invalid selection. Authentication challenge aborted.")
                         }
-                    }
-                    elseif($Challenge.Mechanisms.Count -eq 1) {
+                    } elseif ($Challenge.Mechanisms.Count -eq 1) {
                         # Force selection to unique mechanism
                         $Selection = 1
-                    }
-                    else {
+                    } else {
                         # Unknown error
                         Throw "Invalid number of mechanisms received. Authentication challenge aborted."
                     }
@@ -213,7 +223,7 @@ function Connect-XPMPlatform {
                     $Auth.MechanismId = $ChosenMechanism.MechanismId
 
                     # Decide for Prompt or Out-of-bounds Auth
-                    switch($ChosenMechanism.AnswerType) {
+                    switch ($ChosenMechanism.AnswerType) {
                         "Text" {
                             # Prompt User for answer
                             $Auth.Action = "Answer"
@@ -241,9 +251,9 @@ function Connect-XPMPlatform {
 
                     # Get Response
                     $WebResponseResult = $WebResponse.Content | ConvertFrom-Json
-                    if($WebResponseResult.Success) {
+                    if ($WebResponseResult.Success) {
                         # Evaluate Summary response
-                        if($WebResponseResult.Result.Summary -eq "OobPending") {
+                        if ($WebResponseResult.Result.Summary -eq "OobPending") {
                             $Answer = Read-Host "Enter code or press <enter> to finish authentication"
                             # Send Poll message to Delinea Identity Platform after pressing enter key
                             $Uri = ("https://{0}/Security/AdvanceAuthentication" -f $Url)
@@ -257,10 +267,9 @@ function Connect-XPMPlatform {
                             $Auth.MechanismId = $ChosenMechanism.MechanismId
 
                             # Either send entered code or poll service for answer
-                            if([System.String]::IsNullOrEmpty($Answer)) {
+                            if ([System.String]::IsNullOrEmpty($Answer)) {
                                 $Auth.Action = "Poll"
-                            }
-                            else {
+                            } else {
                                 $Auth.Action = "Answer"
                                 $Auth.Answer = $Answer
                             }
@@ -269,8 +278,8 @@ function Connect-XPMPlatform {
                             # Send Poll message or Answer
                             $WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
                             $WebResponseResult = $WebResponse.Content | ConvertFrom-Json
-                            if($WebResponseResult.Result.Summary -ne "LoginSuccess") {
-                                Throw("Failed to receive challenge answer or answer is incorrect. Authentication challenge aborted.")
+                            if ($WebResponseResult.Result.Summary -ne "LoginSuccess") {
+                                Throw ("Failed to receive challenge answer or answer is incorrect. Authentication challenge aborted.")
                             }
                         }
                         # If summary return LoginSuccess at any step, we can proceed with session
@@ -281,20 +290,17 @@ function Connect-XPMPlatform {
                             # Return information values to confirm connection success
                             return ($Global:PlatformConnection | Select-Object -Property PodFqdn, User, Summary | Format-List)
                         }
-                    }
-                    else {
+                    } else {
                         # Unsuccesful connection
                         Throw $WebResponseResult.Message
                     }
                 }
-            }
-            else {
+            } else {
                 # Unsuccesful connection
                 Throw $InitialResponseResult.Message
             }
         }
-    }
-    catch {
+    } catch {
         Throw $_.Exception
     }
 }

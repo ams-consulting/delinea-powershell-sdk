@@ -5,10 +5,27 @@
 # Author   : Fabrice Viguier
 # Contact  : support AT ams-consulting.uk
 # Release  : 21/01/2016
-# Copyright: (c) 2024 AMS Consulting. Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
-#            You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software
-#            distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#            See the License for the specific language governing permissions and limitations under the License.
+# License  : MIT License
+#
+# Copyright (c) 2024 AMS Consulting.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 ###########################################################################################
 
 
@@ -20,11 +37,9 @@ function Install-PSModule {
 	    # Deduct source location from script invocation path
         if ($PSVersionTable.Platform -eq "Win32NT") {
 			$Source = ("{0}\Delinea.Platform.PowerShell" -f (Split-Path -Parent $PSCommandPath))
-		}
-		elseif ($PSVersionTable.Platform -eq "Unix") {
+		} elseif ($PSVersionTable.Platform -eq "Unix") {
 			$Source = ("{0}/Delinea.Platform.PowerShell" -f (Split-Path -Parent $PSCommandPath))
-		}
-		else {
+		} else {
 			# Unsupported platform
 			Write-Error ("Unknown platform '{0}'. Aborting installation." -f $PSVersionTable.Platform)
 			Exit 1
@@ -36,15 +51,13 @@ function Install-PSModule {
 	        Write-Host
 	        Write-Host ("{0} files copied." -f $FileCopied.Count)
 	        Write-Host
-        }
-        else {
+        } else {
             Write-Error ("No files copied.")
         }
 
 		# Unblock files to avoid preventing importing the module
         Get-ChildItem -Path $Path -Recurse | Unblock-File
-    }
-    catch {
+    } catch {
 		# Unhandled Exception
 		Throw $_.Exception
     }
@@ -74,12 +87,10 @@ function Test-AdminRight {
 			Write-Warning ("Installation must be run with Local Administrator privileges. User {0} does not have enough privileges." -f $Identity)
 			Exit 1
 		}
-	}
-	elseif (($PSVersionTable.Platform -eq "Unix")) {
+	} elseif (($PSVersionTable.Platform -eq "Unix")) {
 		# Get current user identity and group
 
-	}
-	else {
+	} else {
 		# Unsupported platform
 		Write-Error ("Unknown platform '{0}'. Aborting installation." -f $PSVersionTable.Platform)
 		Exit 1
@@ -96,8 +107,7 @@ function Get-PSModulePath {
 			# Set PSModulePath into Machine Environment
 			[System.Environment]::SetEnvironmentVariable("PSModulePath", ("{0};{1}" -f [System.Environment]::GetEnvironmentVariable("PSModulePath"), $PSModulePath), "Machine")
 			Write-Warning "PSModulePath environment variable has been updated. Operating System may need to be rebooted for change to be taken into account."  
-		}
-		else {
+		} else {
 			Write-Host ("Custom PowerShell module path detected on this system under '{0}'" -f $PSModulePath)
 		}
 		# Validating path exists even when set in environment variable
@@ -105,15 +115,13 @@ function Get-PSModulePath {
 			# Create full path
 			mkdir "C:\Program Files\Delinea"
 			mkdir "C:\Program Files\Delinea\PowerShell"
-		}
-		else {
+		} else {
 			# Create PowerShell folder
 			if (-not (Test-Path -Path "C:\Program Files\Delinea\PowerShell")) {
 				mkdir "C:\Program Files\Delinea\PowerShell"
 			}
 		}
-	}
-	elseif (($PSVersionTable.Platform -eq "Unix")) {
+	} elseif (($PSVersionTable.Platform -eq "Unix")) {
 		# Get PSModulePath from Environment on Windows platform
 		$PSModulePath = ([System.Environment]::GetEnvironmentVariable("PSModulePath")) -Split ':' | Where-Object { $_ -match "/usr/local/share/powershell/Modules" }
 		if ([System.String]::IsNullOrEmpty($PSModulePath)) {
@@ -122,8 +130,7 @@ function Get-PSModulePath {
 			# Set PSModulePath into Machine Environment
 			[System.Environment]::SetEnvironmentVariable("PSModulePath", ("{0}:{1}" -f [System.Environment]::GetEnvironmentVariable("PSModulePath"), $PSModulePath), "Machine")
 			Write-Warning "PSModulePath environmnet variable has been updated. Operating System may need to be rebooted for change to be taken into account."  
-		}
-		else {
+		} else {
 			Write-Host ("PowerShell module path detected on this system under '{0}'" -f $PSModulePath)
 		}
 		# Validating path exists even when set in environment variable
@@ -131,15 +138,13 @@ function Get-PSModulePath {
 			# Create full path
 			mkdir "/usr/local/share/powershell"
 			mkdir "/usr/local/share/powershell/Modules"
-		}
-		else {
+		} else {
 			# Create Modules folder
 			if (-not (Test-Path -Path "/usr/local/share/powershell/Modules")) {
 				mkdir "/usr/local/share/powershell/Modules"
 			}
 		}
-	}
-	else {
+	} else {
 		# Unsupported platform
 		Write-Error ("Unknown platform '{0}'. Aborting installation." -f $PSVersionTable.Platform)
 		Exit 1
@@ -167,12 +172,10 @@ $PSModulePath = Get-PSModulePath
 if ($PSVersionTable.Platform -eq "Win32NT") {
 	# Set installation path on Windows from module path variable
 	$InstallationPath = ("{0}Delinea.Platform.PowerShell" -f $PSModulePath)
-}
-elseif (($PSVersionTable.Platform -eq "Unix")) {
+} elseif (($PSVersionTable.Platform -eq "Unix")) {
 	# Set installation path on Unix from module path variable
 	$InstallationPath = ("{0}/Delinea.Platform.PowerShell" -f $PSModulePath)
-}
-else {
+} else {
 	# Unsupported platform
 	Write-Error ("Unknown platform '{0}'. Aborting installation." -f $PSVersionTable.Platform)
 	Exit 1
@@ -218,8 +221,7 @@ if (Test-Path -Path $InstallationPath) {
 			Exit
 		}
 	}
-}
-else {
+} else {
 	Write-Host "Installing module."
 	# Installing Module
     Install-PSModule -Path $InstallationPath
