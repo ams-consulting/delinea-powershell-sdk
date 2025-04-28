@@ -18,7 +18,17 @@ function Install-PSModule {
     # Install Module by copying Module folder to destination folder
     try {
 	    # Deduct source location from script invocation path
-        $Source = ("{0}\Delinea.Platform.PowerShell" -f (Split-Path -Parent $PSCommandPath))
+        if ($PSVersionTable.Platform -eq "Win32NT") {
+			$Source = ("{0}\Delinea.Platform.PowerShell" -f (Split-Path -Parent $PSCommandPath))
+		}
+		elseif ($PSVersionTable.Platform -eq "Unix") {
+			$Source = ("{0}/Delinea.Platform.PowerShell" -f (Split-Path -Parent $PSCommandPath))
+		}
+		else {
+			# Unsupported platform
+			Write-Error ("Unknown platform '{0}'. Aborting installation." -f $PSVersionTable.Platform)
+			Exit 1
+		}
         
         # Copy source to module location
         $FileCopied = Copy-Item -Path $Source -Destination $Path -Recurse -Force -PassThru -ErrorAction "SilentlyContinue"
@@ -48,52 +58,92 @@ function Remove-PSModule {
 }
 
 
-function Test-PSVersion {
-	# Get current PowerShell version and edition
-	Write-Host ("You are running PowerShell {0} edition (version {1})." -f $PSVersionTable.PSEdition, $PSVersionTable.PSVersion)
-	if ($PSVersionTable.PSEdition -eq "Core") {
-		Write-Warning "This PowerShell module is NOT compatible with PowerShell Core edition. Aborting installation."
-		Exit 1
-	}
+function Get-PSEdition {
+	# Get current PowerShell edition and version
+	Write-Host ("You are running PowerShell {0} edition version {1} on {2} platform." -f $PSVersionTable.PSEdition, $PSVersionTable.PSVersion, $PSVersionTable.Platform)
 }
 
 function Test-AdminRight {
-	# Get current user identity and principal
-    $Identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-	$WindowsPrincipal = New-Object System.Security.Principal.WindowsPrincipal($Identity)
-	
-	# Validate that current user is a Local Administrator
-	if (-not $WindowsPrincipal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)) {
-        Write-Warning ("Installation must be run with Local Administrator privileges. User {0} does not have enough privileges." -f $Identity)
-        Exit
+	if ($PSVersionTable.Platform -eq "Win32NT") {
+		# Get current user identity and principal
+		$Identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+		$WindowsPrincipal = New-Object System.Security.Principal.WindowsPrincipal($Identity)
+		
+		# Validate that current user is a Local Administrator
+		if (-not $WindowsPrincipal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)) {
+			Write-Warning ("Installation must be run with Local Administrator privileges. User {0} does not have enough privileges." -f $Identity)
+			Exit 1
+		}
 	}
+	elseif (($PSVersionTable.Platform -eq "Unix")) {
+		# Get current user identity and group
+
+	}
+	else {
+		# Unsupported platform
+		Write-Error ("Unknown platform '{0}'. Aborting installation." -f $PSVersionTable.Platform)
+		Exit 1
+	}	
 }
 
 function Get-PSModulePath {
-    # Get PSModulePath from Environment
-    $PSModulePath = ([System.Environment]::GetEnvironmentVariable("PSModulePath")) -Split ';' | Where-Object { $_ -match "\\Delinea\\PowerShell\\" }
-    if ([System.String]::IsNullOrEmpty($PSModulePath)) {
-	    Write-Host "No Delinea Platform PowerShell Module detected on this system."
-	    if (-not (Test-Path -Path "C:\Program Files\Delinea\")) {
-		    # Create full path
-		    mkdir "C:\Program Files\Delinea"
-		    mkdir "C:\Program Files\Delinea\PowerShell"
-	    }
-	    else {
-		    # Create PowerShell folder
-		    if (-not (Test-Path -Path "C:\Program Files\Delinea\PowerShell")) {
-			    mkdir "C:\Program Files\Delinea\PowerShell"
-		    }
-	    }
-	    $PSModulePath = "C:\Program Files\Delinea\PowerShell\"
-        # Set PSModulePath into Machine Environment
-        [System.Environment]::SetEnvironmentVariable("PSModulePath", ("{0};{1}" -f [System.Environment]::GetEnvironmentVariable("PSModulePath"), $PSModulePath), "Machine")
-        Write-Warning "PSModulePath environmnet variable has been updated. Operating System may need to be rebooted for change to be taken into account."  
-    }
-    else {
-	    Write-Host ("Delinea Platform PowerShell module detected on this system under '{0}'" -f $PSModulePath)
-    }
-    
+    if ($PSVersionTable.Platform -eq "Win32NT") {
+		# Get PSModulePath from Environment on Windows platform
+		$PSModulePath = ([System.Environment]::GetEnvironmentVariable("PSModulePath")) -Split ';' | Where-Object { $_ -match "C:\\Program Files\\Delinea\\PowerShell\\" }
+		if ([System.String]::IsNullOrEmpty($PSModulePath)) {
+			Write-Host "No custom PowerShell Module path detected on this system."
+			$PSModulePath = "C:\Program Files\Delinea\PowerShell\"
+			# Set PSModulePath into Machine Environment
+			[System.Environment]::SetEnvironmentVariable("PSModulePath", ("{0};{1}" -f [System.Environment]::GetEnvironmentVariable("PSModulePath"), $PSModulePath), "Machine")
+			Write-Warning "PSModulePath environment variable has been updated. Operating System may need to be rebooted for change to be taken into account."  
+		}
+		else {
+			Write-Host ("Custom PowerShell module path detected on this system under '{0}'" -f $PSModulePath)
+		}
+		# Validating path exists even when set in environment variable
+		if (-not (Test-Path -Path "C:\Program Files\Delinea\")) {
+			# Create full path
+			mkdir "C:\Program Files\Delinea"
+			mkdir "C:\Program Files\Delinea\PowerShell"
+		}
+		else {
+			# Create PowerShell folder
+			if (-not (Test-Path -Path "C:\Program Files\Delinea\PowerShell")) {
+				mkdir "C:\Program Files\Delinea\PowerShell"
+			}
+		}
+	}
+	elseif (($PSVersionTable.Platform -eq "Unix")) {
+		# Get PSModulePath from Environment on Windows platform
+		$PSModulePath = ([System.Environment]::GetEnvironmentVariable("PSModulePath")) -Split ':' | Where-Object { $_ -match "/usr/local/share/powershell/Modules" }
+		if ([System.String]::IsNullOrEmpty($PSModulePath)) {
+			Write-Host "No PowerShell Module path detected on this system."
+			$PSModulePath = "/usr/local/share/powershell/Modules"
+			# Set PSModulePath into Machine Environment
+			[System.Environment]::SetEnvironmentVariable("PSModulePath", ("{0}:{1}" -f [System.Environment]::GetEnvironmentVariable("PSModulePath"), $PSModulePath), "Machine")
+			Write-Warning "PSModulePath environmnet variable has been updated. Operating System may need to be rebooted for change to be taken into account."  
+		}
+		else {
+			Write-Host ("PowerShell module path detected on this system under '{0}'" -f $PSModulePath)
+		}
+		# Validating path exists even when set in environment variable
+		if (-not (Test-Path -Path "/usr/local/share/powershell")) {
+			# Create full path
+			mkdir "/usr/local/share/powershell"
+			mkdir "/usr/local/share/powershell/Modules"
+		}
+		else {
+			# Create Modules folder
+			if (-not (Test-Path -Path "/usr/local/share/powershell/Modules")) {
+				mkdir "/usr/local/share/powershell/Modules"
+			}
+		}
+	}
+	else {
+		# Unsupported platform
+		Write-Error ("Unknown platform '{0}'. Aborting installation." -f $PSVersionTable.Platform)
+		Exit 1
+	}
 	# Return Path
     return $PSModulePath
 }
@@ -103,7 +153,7 @@ function Get-PSModulePath {
 ##############
 
 # Validate PSEdition and Local Admin privileges
-Test-PSVersion
+Get-PSEdition
 Test-AdminRight
 
 # Starting installation
@@ -114,7 +164,19 @@ Write-Host "################################################"
 Write-Host
 
 $PSModulePath = Get-PSModulePath
-$InstallationPath = ("{0}Delinea.Platform.PowerShell" -f $PSModulePath)
+if ($PSVersionTable.Platform -eq "Win32NT") {
+	# Set installation path on Windows from module path variable
+	$InstallationPath = ("{0}Delinea.Platform.PowerShell" -f $PSModulePath)
+}
+elseif (($PSVersionTable.Platform -eq "Unix")) {
+	# Set installation path on Unix from module path variable
+	$InstallationPath = ("{0}/Delinea.Platform.PowerShell" -f $PSModulePath)
+}
+else {
+	# Unsupported platform
+	Write-Error ("Unknown platform '{0}'. Aborting installation." -f $PSVersionTable.Platform)
+	Exit 1
+}	
 
 Write-Host ("Delinea Platform PowerShell module will be using Installation path:`n`t'{0}'" -f $InstallationPath)
 
