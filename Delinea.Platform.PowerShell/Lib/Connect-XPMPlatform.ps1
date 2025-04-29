@@ -182,9 +182,9 @@ function Connect-XPMPlatform {
             Write-Verbose("Content type: {0}" -f $ContentType)
             Write-Verbose("Headers: {0}" -f ($Header | Out-String))
             $InitialResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
-
             # Getting Authentication challenges from initial Response
             $InitialResponseResult = $InitialResponse.Content | ConvertFrom-Json
+            Write-Verbose("JSON Response:`n{0}" -f ($InitialResponseResult | ConvertTo-Json -Depth 100))
             if ($InitialResponseResult.Success) {
                 # Go through all challenges
                 foreach ($Challenge in $InitialResponseResult.Result.Challenges) {
@@ -251,7 +251,7 @@ function Connect-XPMPlatform {
                     $Header = @{"X-CENTRIFY-NATIVE-CLIENT" = "True"}
 
                     # Send answer
-                    Write-Verbose("Send challenge answer to XPM Platform Endpoint: {0}`n" -f $Uri)
+                    Write-Verbose("Send challenge answer to XPM Platform Endpoint: {0}" -f $Uri)
                     Write-Verbose("JSON Payload:`n{0}" -f $Json)
                     Write-Verbose("Content type: {0}" -f $ContentType)
                     Write-Verbose("Headers: {0}" -f ($Header | Out-String))
@@ -259,6 +259,7 @@ function Connect-XPMPlatform {
 
                     # Get Response
                     $WebResponseResult = $WebResponse.Content | ConvertFrom-Json
+                    Write-Verbose("JSON Response:`n{0}" -f ($WebResponseResult | ConvertTo-Json -Depth 100))
                     if ($WebResponseResult.Success) {
                         # Evaluate Summary response
                         if ($WebResponseResult.Result.Summary -eq "OobPending") {
@@ -284,12 +285,15 @@ function Connect-XPMPlatform {
                             $Json = $Auth | ConvertTo-Json
 
                             # Send Poll message or Answer
-                            Write-Verbose("Send poll message or challenge answer to XPM Platform Endpoint: {0}`n" -f $Uri)
+                            Write-Verbose("Send poll message or challenge answer to XPM Platform Endpoint: {0}" -f $Uri)
                             Write-Verbose("JSON Payload:`n{0}" -f $Json)
                             Write-Verbose("Content type: {0}" -f $ContentType)
                             Write-Verbose("Headers: {0}" -f ($Header | Out-String))
                             $WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
+                            
+                            # Get Response
                             $WebResponseResult = $WebResponse.Content | ConvertFrom-Json
+                            Write-Verbose("JSON Response:`n{0}" -f ($WebResponseResult | ConvertTo-Json -Depth 100))
                             if ($WebResponseResult.Result.Summary -ne "LoginSuccess") {
                                 Throw ("Failed to receive challenge answer or answer is incorrect. Authentication challenge aborted.")
                             }
