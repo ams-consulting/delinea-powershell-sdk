@@ -105,7 +105,7 @@ function Connect-XPMPlatform {
             $Uri = ("https://{0}/oauth2/token/{1}" -f $Url, $Client)
             $ContentType = "application/x-www-form-urlencoded" 
             $Header = @{ "Authorization" = ("Basic {0}" -f $Secret) }
-            Write-Host("Connecting to Centrify Identity Services (https://{0}) using OAuth2 Client Credentials flow" -f $Url)
+            Write-Host("Connecting to XPM Platform Identity Services (https://{0}) using OAuth2 Client Credentials flow" -f $Url)
 
             # Format body
             $Body = ("grant_type=client_credentials&scope={0}" -f  $Scope)
@@ -165,10 +165,10 @@ function Connect-XPMPlatform {
             return (@{ "ConfidentialClient" = $AuthenticationString.Split(':')[0]; "Password" = $AuthenticationString.Split(':')[1]})
         } else {
             # Setup variable for interactive connection using MFA
-            $Uri = ("https://{0}/Security/StartAuthentication" -f $Url)
+            $Uri = ("https://{0}/identity/Security/StartAuthentication" -f $Url)
             $ContentType = "application/json" 
-            $Header = @{}
-            Write-Host("Connecting to XPM PLatform Identity Services (https://{0}) as {1}`n" -f $Url, $User)
+            $Header = @{"X-CENTRIFY-NATIVE-CLIENT" = "True"}
+            Write-Host("Connecting to XPM Platform Identity Services (https://{0}) as {1}`n" -f $Url, $User)
 
             # Format Json query
             $Auth = @{}
@@ -177,6 +177,10 @@ function Connect-XPMPlatform {
             $Json = $Auth | ConvertTo-Json
 
             # Initiate connection
+            Write-Verbose("Connecting to XPM Platform Endpoint: {0}" -f $Uri)
+            Write-Verbose("JSON Payload:`n{0}" -f $Json)
+            Write-Verbose("Content type: {0}" -f $ContentType)
+            Write-Verbose("Headers: {0}" -f ($Header | Out-String))
             $InitialResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
 
             # Getting Authentication challenges from initial Response
@@ -242,11 +246,15 @@ function Connect-XPMPlatform {
                     $Json = $Auth | ConvertTo-Json
 
                     # Send Challenge answer
-                    $Uri = ("https://{0}/Security/AdvanceAuthentication" -f $Url)
+                    $Uri = ("https://{0}/identity/Security/AdvanceAuthentication" -f $Url)
                     $ContentType = "application/json" 
-                    $Header = @{}
+                    $Header = @{"X-CENTRIFY-NATIVE-CLIENT" = "True"}
 
                     # Send answer
+                    Write-Verbose("Send challenge answer to XPM Platform Endpoint: {0}`n" -f $Uri)
+                    Write-Verbose("JSON Payload:`n{0}" -f $Json)
+                    Write-Verbose("Content type: {0}" -f $ContentType)
+                    Write-Verbose("Headers: {0}" -f ($Header | Out-String))
                     $WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
 
                     # Get Response
@@ -256,9 +264,9 @@ function Connect-XPMPlatform {
                         if ($WebResponseResult.Result.Summary -eq "OobPending") {
                             $Answer = Read-Host "Enter code or press <enter> to finish authentication"
                             # Send Poll message to Delinea Identity Platform after pressing enter key
-                            $Uri = ("https://{0}/Security/AdvanceAuthentication" -f $Url)
+                            $Uri = ("https://{0}/identity/Security/AdvanceAuthentication" -f $Url)
                             $ContentType = "application/json" 
-                            $Header = @{}
+                            $Header = @{"X-CENTRIFY-NATIVE-CLIENT" = "True"}
 
                             # Format Json query
                             $Auth = @{}
@@ -276,6 +284,10 @@ function Connect-XPMPlatform {
                             $Json = $Auth | ConvertTo-Json
 
                             # Send Poll message or Answer
+                            Write-Verbose("Send poll message or challenge answer to XPM Platform Endpoint: {0}`n" -f $Uri)
+                            Write-Verbose("JSON Payload:`n{0}" -f $Json)
+                            Write-Verbose("Content type: {0}" -f $ContentType)
+                            Write-Verbose("Headers: {0}" -f ($Header | Out-String))
                             $WebResponse = Invoke-WebRequest -UseBasicParsing -Method Post -SessionVariable WebSession -Uri $Uri -Body $Json -ContentType $ContentType -Headers $Header
                             $WebResponseResult = $WebResponse.Content | ConvertFrom-Json
                             if ($WebResponseResult.Result.Summary -ne "LoginSuccess") {
