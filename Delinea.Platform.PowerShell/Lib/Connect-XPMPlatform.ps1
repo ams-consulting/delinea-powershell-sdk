@@ -233,7 +233,7 @@ function Connect-XPMPlatform {
                             $Auth.Action = "Answer"
                             # Prompt for User answer using SecureString to mask typing
                             $SecureString = Read-Host $ChosenMechanism.PromptMechChosen -AsSecureString
-                            $Auth.Answer = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureString))
+                            $Auth.Answer = [System.Runtime.InteropServices.Marshal]::PtrToStringBSTR([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureString))
                         }
 
                         "StartTextOob" {
