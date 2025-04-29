@@ -34,7 +34,7 @@
     Description = 'This unofficial PowerShell module is to be used with Delinea XPM Platform.'
     GUID = '325f94ca-6660-a42b-210d-2e0f39d34b9a'
     ModuleToProcess = 'Delinea.Platform.PowerShell.psm1'
-    ModuleVersion = '0.4.81122'
+    ModuleVersion = '0.5.290425'
     NestedModules = @(
         # Loading Cmdlets
         '.\Lib\Add-XPMGroupMembers.ps1',

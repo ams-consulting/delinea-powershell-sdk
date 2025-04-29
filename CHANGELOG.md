@@ -1,4 +1,10 @@
 # CHANGELOG
+**0.5.290425 - BETA**
+
+- Updating contact details
+- Updating license to MIT
+- Fixing issues with authentication to XPM Platform
+
 **0.4.81122 - BETA**
 
 - Updating contact details
